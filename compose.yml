@@ -1,0 +1,57 @@
+services:
+
+  device:
+    build:
+      context: .
+      args:
+        SERVICE: device
+    depends_on:
+      - collector
+    environment:
+      - COLLECTOR_URL=http://collector:8080
+
+  collector:
+    build:
+      context: .
+      args:
+        SERVICE: collector
+    depends_on:
+      - nats
+    ports:
+      - "8080:8080"
+    environment:
+      - APP_ADDR=:8080
+      - BROKER_SUBJECT=events
+      - BROKER_URL=nats://nats:4222
+
+  worker:
+    build:
+      context: .
+      args:
+        SERVICE: worker
+    depends_on:
+      - nats
+    environment:
+      - BROKER_SUBJECT=events
+      - BROKER_URL=nats://nats:4222
+
+  nats:
+    image: nats:latest
+    ports:
+      - "4222:4222"
+      - "6222:6222"
+      - "8222:8222"
+
+#   timescaledb:
+#     image: timescale/timescaledb:latest-pg16
+#     ports:
+#       - "5432:5432"
+#     environment:
+#       POSTGRES_USER: postgres
+#       POSTGRES_PASSWORD: postgres
+#       POSTGRES_DB: iot
+#     volumes:
+#       - iot-data:/var/lib/postgresql/data
+
+# volumes:
+#   iot-data:
