@@ -6,15 +6,15 @@ services:
       args:
         SERVICE: device
     depends_on:
-      - collector
+      - gateway
     environment:
-      - COLLECTOR_URL=http://collector:8080
+      - GATEWAY_URL=http://gateway:8080
 
-  collector:
+  gateway:
     build:
       context: .
       args:
-        SERVICE: collector
+        SERVICE: gateway
     depends_on:
       - nats
     ports:
@@ -24,11 +24,11 @@ services:
       - BROKER_SUBJECT=events
       - BROKER_URL=nats://nats:4222
 
-  worker:
+  transformer:
     build:
       context: .
       args:
-        SERVICE: worker
+        SERVICE: transformer
     depends_on:
       - nats
     environment:

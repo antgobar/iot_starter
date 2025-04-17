@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	serverAddr := os.Getenv("COLLECTOR_URL")
+	serverAddr := os.Getenv("GATEWAY_URL")
 	if serverAddr == "" {
 		log.Println("No server address provided")
 		return
