@@ -44,7 +44,7 @@ func main() {
 			return
 		}
 
-		if err := brokerClient.PublishMeasurement(measurement, config.Subject); err != nil {
+		if err := brokerClient.Publish(config.Subject, measurement); err != nil {
 			http.Error(w, "Failed to publish", http.StatusInternalServerError)
 			return
 		}

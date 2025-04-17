@@ -21,7 +21,7 @@ func NewBrokerClient(connectionString string) (*BrokerClient, error) {
 	return &BrokerClient{Connection: nc}, nil
 }
 
-func (b BrokerClient) PublishMeasurement(measurement *measurement.Measurement, subject string) error {
+func (b BrokerClient) Publish(subject string, measurement *measurement.Measurement) error {
 	if measurement.Timestamp.IsZero() {
 		measurement.Timestamp = time.Now().UTC()
 		log.Println("Timestamp not provided: calculated on publish")
@@ -44,7 +44,7 @@ func (b BrokerClient) Close() {
 
 type MeasurementHandler func(msg *measurement.Measurement)
 
-func (b BrokerClient) ProcessMeasurement(subject string, handler MeasurementHandler) error {
+func (b BrokerClient) Subscribe(subject string, handler MeasurementHandler) error {
 	processMessage := func(msg *nats.Msg) {
 		var measurement measurement.Measurement
 		if err := json.Unmarshal(msg.Data, &measurement); err != nil {

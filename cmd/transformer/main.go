@@ -20,7 +20,7 @@ func main() {
 	}
 	defer brokerClient.Close()
 
-	brokerClient.ProcessMeasurement(natsSubject, func(measurement *measurement.Measurement) {
+	brokerClient.Subscribe(natsSubject, func(measurement *measurement.Measurement) {
 		log.Println("Received message:", *measurement)
 	})
 
