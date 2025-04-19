@@ -8,10 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 func main() {
@@ -23,13 +20,12 @@ func main() {
 
 	url := serverAddr + "/measurement"
 	log.Println("Sending data to: ", url)
-	deviceId := uuid.New().String()
 	for {
-		randomInt := rand.Intn(100)
 		measurement := measurement.Measurement{
-			DeviceId:  deviceId,
+			DeviceId:  1,
 			Name:      "temperature",
-			Value:     strconv.Itoa(randomInt),
+			Value:     rand.Float64(),
+			Unit:      "C",
 			Timestamp: time.Now().UTC(),
 		}
 		err := sendMeasurement(url, measurement)

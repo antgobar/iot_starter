@@ -1,4 +1,4 @@
-package main
+package store
 
 import (
 	"context"
@@ -12,8 +12,7 @@ import (
 )
 
 type Store struct {
-	db  *pgxpool.Pool
-	ctx context.Context
+	db *pgxpool.Pool
 }
 
 func NewStore(ctx context.Context, url string) (*Store, error) {
@@ -21,14 +20,16 @@ func NewStore(ctx context.Context, url string) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Store{db: pool, ctx: ctx}, nil
+	store := Store{db: pool}
+	store.setUpTables(ctx)
+	return &store, nil
 }
 
-func (s Store) Close() {
+func (s *Store) Close() {
 	s.db.Close()
 }
 
-func (s Store) RegisterDevice(location string) error {
+func (s *Store) RegisterDevice(ctx context.Context, location string) error {
 	newDevice := measurement.Device{
 		Location:  location,
 		CreatedAt: time.Now().UTC(),
@@ -39,15 +40,15 @@ func (s Store) RegisterDevice(location string) error {
         RETURNING id
     `
 	var deviceId int
-	if err := s.db.QueryRow(s.ctx, sql, newDevice.Location, newDevice.CreatedAt).Scan(&deviceId); err != nil {
+	if err := s.db.QueryRow(ctx, sql, newDevice.Location, newDevice.CreatedAt).Scan(&deviceId); err != nil {
 		return fmt.Errorf("failed to insert device %v: %w", newDevice, err)
 	}
 	return nil
 }
 
-func (s Store) GetDevices() ([]measurement.Device, error) {
+func (s *Store) GetDevices(ctx context.Context) ([]measurement.Device, error) {
 	sql := `SELECT id, location, created_at FROM devices`
-	rows, err := s.db.Query(s.ctx, sql)
+	rows, err := s.db.Query(ctx, sql)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query devices: %w", err)
 	}
@@ -67,54 +68,40 @@ func (s Store) GetDevices() ([]measurement.Device, error) {
 	return devices, nil
 }
 
-func main() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		log.Fatal("DATABASE_URL environment variable not set. Exiting.")
+func (s *Store) SaveMeasurement(ctx context.Context, m measurement.Measurement) error {
+	sql := `
+		INSERT INTO measurements (device_id, name, value, unit, timestamp)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id, device_id, name, value, unit, timestamp 
+		`
+	var storedM measurement.Measurement
+	if err := s.db.QueryRow(
+		ctx, sql, m.DeviceId, m.Name, m.Value, m.Unit, m.Timestamp,
+	).Scan(
+		&storedM.ID, &storedM.DeviceId, &storedM.Name, &storedM.Value, &storedM.Unit, &storedM.Timestamp,
+	); err != nil {
+		return fmt.Errorf("failed to insert measurement %v: %w", storedM, err)
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	store, err := NewStore(ctx, dbURL)
-	if err != nil {
-		log.Println(err.Error())
-		os.Exit(1)
-	}
-	defer store.Close()
-
-	log.Println("Successfully connected to the database.")
-
-	err = store.execSQLFile("sql/schema.sql")
-	if err != nil {
-		log.Println(err.Error())
-		os.Exit(1)
-	}
-
-	err = store.RegisterDevice("some-location")
-	if err != nil {
-		log.Println(err.Error())
-		os.Exit(1)
-	}
-
-	devices, err := store.GetDevices()
-	if err != nil {
-		log.Println(err.Error())
-	}
-	for _, d := range devices {
-		log.Printf("Device: %+v\n", d)
-	}
+	return nil
 }
 
-func (s Store) execSQLFile(path string) error {
+func (s *Store) setUpTables(ctx context.Context) error {
+	err := s.execSQLFile(ctx, "sql/schema.sql")
+	if err != nil {
+		return err
+	}
+	log.Println("Tables created")
+	return nil
+}
+
+func (s *Store) execSQLFile(ctx context.Context, path string) error {
 	sqlBytes, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("could not read SQL file: %w", err)
 	}
 
 	sql := string(sqlBytes)
-	_, err = s.db.Exec(s.ctx, sql)
+	_, err = s.db.Exec(ctx, sql)
 	if err != nil {
 		return fmt.Errorf("failed to execute SQL: %w", err)
 	}

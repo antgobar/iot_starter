@@ -2,24 +2,23 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"iotstarter/internal/broker"
+	"iotstarter/internal/config"
 	"iotstarter/internal/measurement"
 	"iotstarter/internal/middleware"
 	"log"
 	"net/http"
-	"os"
 )
 
 func main() {
-	config, err := GetConfig()
+	config, err := config.LoadGatewayConfig()
 	if err != nil {
-		log.Println("ERROR:", err)
+		log.Println("ERROR:", err.Error())
 		return
 	}
-	brokerClient, err := broker.NewBrokerClient(config.BrokerAddr)
+	brokerClient, err := broker.NewBrokerClient(config.BrokerUrl)
 	if err != nil {
-		log.Println("ERROR: error connecting to broker client")
+		log.Println("ERROR: ", err.Error())
 		return
 	}
 	defer brokerClient.Close()
@@ -29,9 +28,10 @@ func main() {
 	mux.HandleFunc("GET /measurement/schema", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		example := measurement.Measurement{
-			DeviceId: "your-device-id",
-			Name:     "your-measurement-name",
-			Value:    "some-value",
+			DeviceId: 12345,
+			Name:     "temperature",
+			Value:    50,
+			Unit:     "C",
 		}
 		json.NewEncoder(w).Encode(example)
 	})
@@ -44,7 +44,7 @@ func main() {
 			return
 		}
 
-		if err := brokerClient.Publish(config.Subject, measurement); err != nil {
+		if err := brokerClient.Publish(config.BrokerSubject, measurement); err != nil {
 			http.Error(w, "Failed to publish", http.StatusInternalServerError)
 			return
 		}
@@ -54,46 +54,11 @@ func main() {
 
 	stack := middleware.LoadMiddleware()
 	server := http.Server{
-		Addr:    config.ServerAddr,
+		Addr:    config.GatewayAddr,
 		Handler: stack(mux),
 	}
-	log.Println("Server starting on", server.Addr)
+	log.Println("Gateway starting on", server.Addr)
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("could not listen on %s: %v", server.Addr, err)
 	}
-}
-
-type Config struct {
-	ServerAddr string
-	Subject    string
-	BrokerAddr string
-}
-
-func GetConfig() (*Config, error) {
-	serverAddr, err := loadEnv("APP_ADDR")
-	if err != nil {
-		return nil, err
-	}
-	brokerSubject, err := loadEnv("BROKER_SUBJECT")
-	if err != nil {
-		return nil, err
-	}
-	brokerUrl, err := loadEnv("BROKER_URL")
-	if err != nil {
-		return nil, err
-	}
-
-	return &Config{
-		ServerAddr: serverAddr,
-		Subject:    brokerSubject,
-		BrokerAddr: brokerUrl,
-	}, nil
-}
-
-func loadEnv(envName string) (string, error) {
-	env := os.Getenv(envName)
-	if env == "" {
-		return "", errors.New("missing environment variable " + envName)
-	}
-	return env, nil
 }

@@ -1,28 +1,56 @@
 package main
 
 import (
+	"context"
 	"iotstarter/internal/broker"
+	"iotstarter/internal/config"
 	"iotstarter/internal/measurement"
+	"iotstarter/internal/store"
 	"log"
-	"os"
+	"time"
 )
 
 func main() {
-	natsSubject := os.Getenv("BROKER_SUBJECT")
-	brokerUrl := os.Getenv("BROKER_URL")
+	config, err := config.LoadTransformerConfig()
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*5))
+	defer cancel()
 
-	log.Printf("Worker listening on subject: %s", natsSubject)
+	store, err := store.NewStore(ctx, config.DatabaseUrl)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 
-	brokerClient, err := broker.NewBrokerClient(brokerUrl)
+	handler := NewHandler(store)
+
+	brokerClient, err := broker.NewBrokerClient(config.BrokerUrl)
 	if err != nil {
 		log.Println("ERROR: error connecting to broker client")
 		return
 	}
 	defer brokerClient.Close()
 
-	brokerClient.Subscribe(natsSubject, func(measurement *measurement.Measurement) {
-		log.Println("Received message:", *measurement)
-	})
+	brokerClient.Subscribe(config.BrokerSubject, handler.receiveAndSaveMeasurement)
 
+	log.Printf("Transformer listening on subject: %s", config.BrokerSubject)
 	select {}
+}
+
+func NewHandler(store *store.Store) Handler {
+	return Handler{store: store}
+}
+
+type Handler struct {
+	store *store.Store
+}
+
+func (h Handler) receiveAndSaveMeasurement(m *measurement.Measurement) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
+	defer cancel()
+	err := h.store.SaveMeasurement(ctx, *m)
+	if err != nil {
+		log.Println(err.Error())
+	}
 }

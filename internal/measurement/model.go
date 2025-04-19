@@ -6,9 +6,10 @@ import (
 
 type Measurement struct {
 	ID        int       `json:"id"`
-	DeviceId  string    `json:"deviceId"`
+	DeviceId  int       `json:"deviceId"`
 	Name      string    `json:"name"`
-	Value     string    `json:"value"`
+	Value     float64   `json:"value"`
+	Unit      string    `json:"unit"`
 	Timestamp time.Time `json:"timestamp"`
 }
 
