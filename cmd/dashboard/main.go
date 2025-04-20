@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	config, err := config.LoadDashboardConfig()
+	cfg, err := config.LoadDashboardConfig()
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -20,12 +20,12 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*5))
 	defer cancel()
 
-	store, err := store.NewStore(ctx, config.DatabaseUrl)
+	store, err := store.NewStore(ctx, cfg.DatabaseUrl)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
 
 	handler := api.NewHandler().WithStore(store)
-	server := api.NewServer(config.Addr, handler)
+	server := api.NewServer(cfg.Addr, handler)
 	server.Run("Dashboard")
 }

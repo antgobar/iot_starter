@@ -68,7 +68,7 @@ func (s *Store) GetDevices(ctx context.Context) ([]measurement.Device, error) {
 	return devices, nil
 }
 
-func (s *Store) SaveMeasurement(ctx context.Context, m measurement.Measurement) error {
+func (s *Store) SaveMeasurement(ctx context.Context, m *measurement.Measurement) error {
 	log.Println("reached saved measurement", time.Now(), m)
 	sql := `
 		INSERT INTO measurements (device_id, name, value, unit, timestamp)

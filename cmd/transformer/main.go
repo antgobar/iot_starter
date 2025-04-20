@@ -52,7 +52,7 @@ type Handler struct {
 func (h Handler) saveMeasurement(m *measurement.Measurement) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
-	err := h.store.SaveMeasurement(ctx, *m)
+	err := h.store.SaveMeasurement(ctx, m)
 	if err != nil {
 		log.Println(err.Error())
 	}
