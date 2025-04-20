@@ -3,22 +3,18 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"iotstarter/internal/config"
 	"iotstarter/internal/measurement"
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 	"time"
 )
 
 func main() {
-	serverAddr := os.Getenv("GATEWAY_URL")
-	if serverAddr == "" {
-		log.Println("No server address provided")
-		return
-	}
+	gatewayUrl := config.MustLoadEnv("GATEWAY_URL")
 
-	url := serverAddr + "/measurements"
+	url := gatewayUrl + "/measurements"
 	log.Println("Sending data to: ", url)
 	for {
 		measurement := measurement.Measurement{

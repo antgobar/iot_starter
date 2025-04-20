@@ -8,17 +8,16 @@ import (
 )
 
 func main() {
-	cfg, err := config.LoadGatewayConfig()
-	if err != nil {
-		log.Fatalln("ERROR:", err.Error())
-	}
-	brokerClient, err := broker.NewNatsBrokerClient(cfg.BrokerUrl)
+	brokerUrl := config.MustLoadEnv("BROKER_URL")
+	gatewayAddr := config.MustLoadEnv("GATEWAY_ADDR")
+
+	brokerClient, err := broker.NewNatsBrokerClient(brokerUrl)
 	if err != nil {
 		log.Fatalln("ERROR: ", err.Error())
 	}
 	defer brokerClient.Close()
 
 	handler := api.NewHandler(nil, brokerClient)
-	server := api.NewServer(cfg.Addr, handler)
+	server := api.NewServer(gatewayAddr, handler)
 	server.Run("Gateway")
 }

@@ -11,19 +11,17 @@ import (
 )
 
 func main() {
-	cfg, err := config.LoadTransformerConfig()
-	if err != nil {
-		log.Fatalln(err.Error())
-	}
+	dbUrl := config.MustLoadEnv("DATABASE_URL")
+	brokerUrl := config.MustLoadEnv("BROKER_URL")
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*5))
 	defer cancel()
-
-	store, err := store.NewStore(ctx, cfg.DatabaseUrl)
+	store, err := store.NewStore(ctx, dbUrl)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
 
-	brokerClient, err := broker.NewNatsBrokerClient(cfg.BrokerUrl)
+	brokerClient, err := broker.NewNatsBrokerClient(brokerUrl)
 	if err != nil {
 		log.Println("ERROR: error connecting to broker client")
 		return

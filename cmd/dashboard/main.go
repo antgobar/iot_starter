@@ -10,22 +10,17 @@ import (
 )
 
 func main() {
-	cfg, err := config.LoadDashboardConfig()
-	if err != nil {
-		log.Fatalln(err.Error())
-	}
-	if err != nil {
-		log.Fatalln(err.Error())
-	}
+	dbUrl := config.MustLoadEnv("DATABASE_URL")
+	apiAddr := config.MustLoadEnv("API_ADDR")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*5))
 	defer cancel()
 
-	store, err := store.NewStore(ctx, cfg.DatabaseUrl)
+	store, err := store.NewStore(ctx, dbUrl)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
 
 	handler := api.NewHandler(store, nil)
-	server := api.NewServer(cfg.Addr, handler)
-	server.Run("Dashboard")
+	server := api.NewServer(apiAddr, handler)
+	server.Run("DashboardApi")
 }
