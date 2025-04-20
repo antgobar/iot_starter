@@ -75,14 +75,41 @@ func (s *Store) SaveMeasurement(ctx context.Context, m measurement.Measurement) 
 		RETURNING id, device_id, name, value, unit, timestamp 
 		`
 	var storedM measurement.Measurement
-	if err := s.db.QueryRow(
-		ctx, sql, m.DeviceId, m.Name, m.Value, m.Unit, m.Timestamp,
-	).Scan(
+	row := s.db.QueryRow(ctx, sql, m.DeviceId, m.Name, m.Value, m.Unit, m.Timestamp)
+	err := row.Scan(
 		&storedM.ID, &storedM.DeviceId, &storedM.Name, &storedM.Value, &storedM.Unit, &storedM.Timestamp,
-	); err != nil {
+	)
+	if err != nil {
 		return fmt.Errorf("failed to insert measurement %v: %w", storedM, err)
 	}
 	return nil
+}
+
+func (s *Store) GetDeviceMeasurements(ctx context.Context, deviceId int, start, end time.Time) ([]measurement.Measurement, error) {
+	sql := `
+		SELECT * FROM measurements
+		WHERE device_id = $1
+		AND timestamp BETWEEN $2 AND $3
+	`
+	rows, err := s.db.Query(ctx, sql, deviceId, start, end)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve measurement: %w", err)
+	}
+	defer rows.Close()
+
+	var measurements = make([]measurement.Measurement, 0)
+	for rows.Next() {
+		var m measurement.Measurement
+		if err := rows.Scan(&m.ID, &m.DeviceId, &m.Name, &m.Value, &m.Unit, &m.Timestamp); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		measurements = append(measurements, m)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows iteration error: %w", err)
+	}
+	return measurements, nil
+
 }
 
 func (s *Store) setUpTables(ctx context.Context) error {

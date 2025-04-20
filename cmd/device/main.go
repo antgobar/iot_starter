@@ -24,7 +24,7 @@ func main() {
 		measurement := measurement.Measurement{
 			DeviceId:  1,
 			Name:      "temperature",
-			Value:     rand.Float64(),
+			Value:     rand.Float64() * 10,
 			Unit:      "C",
 			Timestamp: time.Now().UTC(),
 		}

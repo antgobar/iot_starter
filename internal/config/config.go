@@ -5,12 +5,10 @@ import (
 	"os"
 )
 
+const BrokerMeasurementSubject = "measurement"
+
 func LoadGatewayConfig() (*GatewayConfig, error) {
 	brokerUrl, err := loadEnv("BROKER_URL")
-	if err != nil {
-		return nil, err
-	}
-	brokerSubject, err := loadEnv("BROKER_SUBJECT")
 	if err != nil {
 		return nil, err
 	}
@@ -20,16 +18,12 @@ func LoadGatewayConfig() (*GatewayConfig, error) {
 	}
 	return &GatewayConfig{
 		BrokerUrl:     brokerUrl,
-		BrokerSubject: brokerSubject,
-		GatewayAddr:   gatewayAddr}, nil
+		BrokerSubject: BrokerMeasurementSubject,
+		Addr:          gatewayAddr}, nil
 }
 
 func LoadTransformerConfig() (*TransformerConfig, error) {
 	brokerUrl, err := loadEnv("BROKER_URL")
-	if err != nil {
-		return nil, err
-	}
-	brokerSubject, err := loadEnv("BROKER_SUBJECT")
 	if err != nil {
 		return nil, err
 	}
@@ -40,9 +34,21 @@ func LoadTransformerConfig() (*TransformerConfig, error) {
 
 	return &TransformerConfig{
 		BrokerUrl:     brokerUrl,
-		BrokerSubject: brokerSubject,
+		BrokerSubject: BrokerMeasurementSubject,
 		DatabaseUrl:   dbUrl,
 	}, nil
+}
+
+func LoadDashboardConfig() (*DashboardConfig, error) {
+	apiAddr, err := loadEnv("API_ADDR")
+	if err != nil {
+		return nil, err
+	}
+	dbUrl, err := loadEnv("DATABASE_URL")
+	if err != nil {
+		return nil, err
+	}
+	return &DashboardConfig{Addr: apiAddr, DatabaseUrl: dbUrl}, nil
 }
 
 func loadEnv(envName string) (string, error) {
@@ -56,11 +62,16 @@ func loadEnv(envName string) (string, error) {
 type GatewayConfig struct {
 	BrokerUrl     string
 	BrokerSubject string
-	GatewayAddr   string
+	Addr          string
 }
 
 type TransformerConfig struct {
 	BrokerUrl     string
 	BrokerSubject string
 	DatabaseUrl   string
+}
+
+type DashboardConfig struct {
+	Addr        string
+	DatabaseUrl string
 }

@@ -13,28 +13,15 @@ import (
 func main() {
 	config, err := config.LoadGatewayConfig()
 	if err != nil {
-		log.Println("ERROR:", err.Error())
-		return
+		log.Fatalln("ERROR:", err.Error())
 	}
 	brokerClient, err := broker.NewBrokerClient(config.BrokerUrl)
 	if err != nil {
-		log.Println("ERROR: ", err.Error())
-		return
+		log.Fatalln("ERROR: ", err.Error())
 	}
 	defer brokerClient.Close()
 
 	mux := http.NewServeMux()
-
-	mux.HandleFunc("GET /measurement/schema", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		example := measurement.Measurement{
-			DeviceId: 12345,
-			Name:     "temperature",
-			Value:    50,
-			Unit:     "C",
-		}
-		json.NewEncoder(w).Encode(example)
-	})
 
 	mux.HandleFunc("POST /measurement", func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
@@ -54,7 +41,7 @@ func main() {
 
 	stack := middleware.LoadMiddleware()
 	server := http.Server{
-		Addr:    config.GatewayAddr,
+		Addr:    config.Addr,
 		Handler: stack(mux),
 	}
 	log.Println("Gateway starting on", server.Addr)

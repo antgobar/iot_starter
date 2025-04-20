@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Series Chart</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Luxon for date handling -->
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+    <!-- Chart.js Luxon adapter -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        #chart-container {
+            width: 100%;
+            max-width: 800px;
+            margin: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Device Measurement Time Series</h1>
+    <div id="chart-container">
+        <canvas id="timeSeriesChart"></canvas>
+    </div>
+
+    <script>
+        const endpoint = 'http://localhost:8080/measurements/1';
+
+        async function fetchMeasurements() {
+            try {
+                const res = await fetch(endpoint);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
+            } catch (err) {
+                console.error('Fetch error:', err);
+                return [];
+            }
+        }
+
+        function processData(data) {
+            data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            return {
+                labels: data.map(m => m.timestamp),
+                values: data.map(m => m.value),
+                unit: data.length ? data[0].unit : ''
+            };
+        }
+
+        async function initChart() {
+            const raw = await fetchMeasurements();
+            const { labels, values, unit } = processData(raw);
+            const ctx = document.getElementById('timeSeriesChart').getContext('2d');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: `Value (${unit})`,
+                        data: values,
+                        fill: false,
+                        borderWidth: 2,
+                        pointRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'minute',
+                                stepSize: 5,
+                                displayFormats: {
+                                    minute: "yyyy-MM-dd'T'HH:mm:ss"
+                                }
+                            },
+                            ticks: {
+                                autoSkip: false
+                            },
+                            title: { display: true, text: 'Timestamp (ISO)' }
+                        },
+                        y: {
+                            title: { display: true, text: `Value (${unit})` }
+                        }
+                    }
+                }
+            });
+        }
+
+        window.onload = initChart;
+    </script>
+</body>
+
+</html>

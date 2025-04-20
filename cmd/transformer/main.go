@@ -32,7 +32,7 @@ func main() {
 	}
 	defer brokerClient.Close()
 
-	brokerClient.Subscribe(config.BrokerSubject, handler.receiveAndSaveMeasurement)
+	brokerClient.Subscribe(config.BrokerSubject, handler.saveMeasurement)
 
 	log.Printf("Transformer listening on subject: %s", config.BrokerSubject)
 	select {}
@@ -46,7 +46,7 @@ type Handler struct {
 	store *store.Store
 }
 
-func (h Handler) receiveAndSaveMeasurement(m *measurement.Measurement) {
+func (h Handler) saveMeasurement(m *measurement.Measurement) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 	err := h.store.SaveMeasurement(ctx, *m)
