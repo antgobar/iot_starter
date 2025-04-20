@@ -69,6 +69,7 @@ func (s *Store) GetDevices(ctx context.Context) ([]measurement.Device, error) {
 }
 
 func (s *Store) SaveMeasurement(ctx context.Context, m measurement.Measurement) error {
+	log.Println("reached saved measurement", time.Now(), m)
 	sql := `
 		INSERT INTO measurements (device_id, name, value, unit, timestamp)
 		VALUES ($1, $2, $3, $4, $5)

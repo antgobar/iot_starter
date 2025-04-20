@@ -11,30 +11,33 @@ import (
 )
 
 func main() {
-	config, err := config.LoadTransformerConfig()
+	cfg, err := config.LoadTransformerConfig()
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*5))
 	defer cancel()
 
-	store, err := store.NewStore(ctx, config.DatabaseUrl)
+	store, err := store.NewStore(ctx, cfg.DatabaseUrl)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
 
 	handler := NewHandler(store)
 
-	brokerClient, err := broker.NewBrokerClient(config.BrokerUrl)
+	brokerClient, err := broker.NewBrokerClient(cfg.BrokerUrl)
 	if err != nil {
 		log.Println("ERROR: error connecting to broker client")
 		return
 	}
 	defer brokerClient.Close()
 
-	brokerClient.Subscribe(config.BrokerSubject, handler.saveMeasurement)
+	err = brokerClient.Subscribe(config.BrokerMeasurementSubject, handler.saveMeasurement)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 
-	log.Printf("Transformer listening on subject: %s", config.BrokerSubject)
+	log.Printf("Transformer listening on subject: %s", config.BrokerMeasurementSubject)
 	select {}
 }
 
@@ -53,4 +56,5 @@ func (h Handler) saveMeasurement(m *measurement.Measurement) {
 	if err != nil {
 		log.Println(err.Error())
 	}
+	log.Println("Stored measurement under id", m.ID, "for device id", m.DeviceId)
 }

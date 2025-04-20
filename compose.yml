@@ -21,7 +21,6 @@ services:
       - "8080:8080"
     environment:
       - GATEWAY_ADDR=:8080
-      - BROKER_SUBJECT=events
       - BROKER_URL=nats://nats:4222
 
   transformer:
@@ -32,7 +31,6 @@ services:
     depends_on:
       - nats
     environment:
-      - BROKER_SUBJECT=events
       - BROKER_URL=nats://nats:4222
 
   nats:

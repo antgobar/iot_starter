@@ -42,8 +42,6 @@ func (b BrokerClient) Close() {
 	b.Connection.Close()
 }
 
-type MeasurementHandler func(msg *measurement.Measurement)
-
 func (b BrokerClient) Subscribe(subject string, handler MeasurementHandler) error {
 	processMessage := func(msg *nats.Msg) {
 		var measurement measurement.Measurement

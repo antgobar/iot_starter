@@ -18,7 +18,7 @@ func main() {
 		return
 	}
 
-	url := serverAddr + "/measurement"
+	url := serverAddr + "/measurements"
 	log.Println("Sending data to: ", url)
 	for {
 		measurement := measurement.Measurement{

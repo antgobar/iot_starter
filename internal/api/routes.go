@@ -3,12 +3,29 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"iotstarter/internal/config"
+	"iotstarter/internal/measurement"
 	"log"
 	"net/http"
 	"time"
 )
 
-func (h Handler) getDeviceMeasurements(w http.ResponseWriter, r *http.Request) {
+func registerUserRoutes(h *Handler) *http.ServeMux {
+	mux := http.NewServeMux()
+
+	if h.store != nil {
+		mux.HandleFunc("POST /devices", h.registerDevice)
+		mux.HandleFunc("GET /devices", h.getDevices)
+		mux.HandleFunc("GET /devices/{id}/measurements", h.getDeviceMeasurements)
+	}
+
+	if h.broker != nil {
+		mux.HandleFunc("POST /measurements", h.saveMeasurement)
+	}
+	return mux
+}
+
+func (h *Handler) getDeviceMeasurements(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
@@ -29,13 +46,13 @@ func (h Handler) getDeviceMeasurements(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(measurements)
 }
 
-func (h Handler) registerDevice(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) registerDevice(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
 	location := r.FormValue("location")
 	if location == "" {
-		http.Error(w, "Location not provided", http.StatusBadRequest)
+		http.Error(w, "location required", http.StatusBadRequest)
 		return
 	}
 
@@ -47,7 +64,7 @@ func (h Handler) registerDevice(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h Handler) getDevices(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) getDevices(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
@@ -59,4 +76,20 @@ func (h Handler) getDevices(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(devices)
+}
+
+func (h *Handler) saveMeasurement(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	measurement := &measurement.Measurement{}
+	if err := json.NewDecoder(r.Body).Decode(&measurement); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.broker.Publish(config.BrokerMeasurementSubject, measurement); err != nil {
+		http.Error(w, "Failed to publish", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
 }

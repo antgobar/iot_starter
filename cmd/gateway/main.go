@@ -1,51 +1,52 @@
 package main
 
 import (
-	"encoding/json"
+	"iotstarter/internal/api"
 	"iotstarter/internal/broker"
 	"iotstarter/internal/config"
-	"iotstarter/internal/measurement"
-	"iotstarter/internal/middleware"
 	"log"
-	"net/http"
 )
 
 func main() {
-	config, err := config.LoadGatewayConfig()
+	cfg, err := config.LoadGatewayConfig()
 	if err != nil {
 		log.Fatalln("ERROR:", err.Error())
 	}
-	brokerClient, err := broker.NewBrokerClient(config.BrokerUrl)
+	brokerClient, err := broker.NewBrokerClient(cfg.BrokerUrl)
 	if err != nil {
 		log.Fatalln("ERROR: ", err.Error())
 	}
 	defer brokerClient.Close()
 
-	mux := http.NewServeMux()
+	handler := api.NewHandler().WithBroker(brokerClient)
+	srv := api.NewServer(cfg.Addr, handler)
+	srv.Run("Gateway")
 
-	mux.HandleFunc("POST /measurement", func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-		measurement := &measurement.Measurement{}
-		if err := json.NewDecoder(r.Body).Decode(&measurement); err != nil {
-			http.Error(w, "Invalid request payload", http.StatusBadRequest)
-			return
-		}
+	// mux := http.NewServeMux()
 
-		if err := brokerClient.Publish(config.BrokerSubject, measurement); err != nil {
-			http.Error(w, "Failed to publish", http.StatusInternalServerError)
-			return
-		}
+	// mux.HandleFunc("POST /measurement", func(w http.ResponseWriter, r *http.Request) {
+	// 	defer r.Body.Close()
+	// 	measurement := &measurement.Measurement{}
+	// 	if err := json.NewDecoder(r.Body).Decode(&measurement); err != nil {
+	// 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+	// 		return
+	// 	}
 
-		w.WriteHeader(http.StatusAccepted)
-	})
+	// 	if err := brokerClient.Publish(config.BrokerMeasurementSubject, measurement); err != nil {
+	// 		http.Error(w, "Failed to publish", http.StatusInternalServerError)
+	// 		return
+	// 	}
 
-	stack := middleware.LoadMiddleware()
-	server := http.Server{
-		Addr:    config.Addr,
-		Handler: stack(mux),
-	}
-	log.Println("Gateway starting on", server.Addr)
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("could not listen on %s: %v", server.Addr, err)
-	}
+	// 	w.WriteHeader(http.StatusAccepted)
+	// })
+
+	// stack := middleware.LoadMiddleware()
+	// server := http.Server{
+	// 	Addr:    cfg.Addr,
+	// 	Handler: stack(mux),
+	// }
+	// log.Println("Gateway starting on", server.Addr)
+	// if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	// 	log.Fatalf("could not listen on %s: %v", server.Addr, err)
+	// }
 }

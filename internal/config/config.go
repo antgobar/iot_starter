@@ -17,9 +17,8 @@ func LoadGatewayConfig() (*GatewayConfig, error) {
 		return nil, err
 	}
 	return &GatewayConfig{
-		BrokerUrl:     brokerUrl,
-		BrokerSubject: BrokerMeasurementSubject,
-		Addr:          gatewayAddr}, nil
+		BrokerUrl: brokerUrl,
+		Addr:      gatewayAddr}, nil
 }
 
 func LoadTransformerConfig() (*TransformerConfig, error) {
@@ -33,9 +32,8 @@ func LoadTransformerConfig() (*TransformerConfig, error) {
 	}
 
 	return &TransformerConfig{
-		BrokerUrl:     brokerUrl,
-		BrokerSubject: BrokerMeasurementSubject,
-		DatabaseUrl:   dbUrl,
+		BrokerUrl:   brokerUrl,
+		DatabaseUrl: dbUrl,
 	}, nil
 }
 
@@ -60,15 +58,13 @@ func loadEnv(envName string) (string, error) {
 }
 
 type GatewayConfig struct {
-	BrokerUrl     string
-	BrokerSubject string
-	Addr          string
+	BrokerUrl string
+	Addr      string
 }
 
 type TransformerConfig struct {
-	BrokerUrl     string
-	BrokerSubject string
-	DatabaseUrl   string
+	BrokerUrl   string
+	DatabaseUrl string
 }
 
 type DashboardConfig struct {

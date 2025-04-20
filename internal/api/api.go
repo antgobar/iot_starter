@@ -10,39 +10,35 @@ import (
 
 type Handler struct {
 	store  *store.Store
-	broker *broker.Broker
+	broker broker.Broker
 }
 
-func newHandler(store *store.Store, broker *broker.Broker) Handler {
-	return Handler{store: store, broker: broker}
+func NewHandler() *Handler {
+	return &Handler{}
 }
 
-func registerUserRoutes(h Handler) *http.ServeMux {
-	mux := http.NewServeMux()
-	mux.HandleFunc("POST /devices", h.registerDevice)
-	mux.HandleFunc("GET /devices", h.getDevices)
-	mux.HandleFunc("GET /devices/{id}/measurements", h.getDeviceMeasurements)
-	// mux.HandleFunc("POST /measurements", h.saveMeasurement)
-	return mux
+func (h *Handler) WithBroker(broker broker.Broker) *Handler {
+	h.broker = broker
+	return h
+}
+
+func (h *Handler) WithStore(store *store.Store) *Handler {
+	h.store = store
+	return h
 }
 
 type Server struct {
 	server *http.Server
 }
 
-func NewServer(addr string, store *store.Store, broker *broker.Broker) Server {
+func NewServer(addr string, handler *Handler) Server {
 	stack := middleware.LoadMiddleware()
-	handler := newHandler(store, broker)
 	mux := registerUserRoutes(handler)
 	server := &http.Server{
 		Addr:    addr,
 		Handler: stack(mux),
 	}
 	return Server{server: server}
-}
-
-func (s Server) WithBroker(broker broker.BrokerClient) {
-
 }
 
 func (s Server) Run(appName string) {
