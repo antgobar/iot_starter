@@ -13,7 +13,7 @@ type BrokerClient struct {
 	Connection *nats.Conn
 }
 
-func NewBrokerClient(connectionString string) (*BrokerClient, error) {
+func NewNatsBrokerClient(connectionString string) (*BrokerClient, error) {
 	nc, err := nats.Connect(connectionString)
 	if err != nil {
 		return nil, err

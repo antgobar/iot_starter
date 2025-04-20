@@ -23,14 +23,14 @@ func main() {
 		log.Fatalln(err.Error())
 	}
 
-	handler := NewHandler(store)
-
-	brokerClient, err := broker.NewBrokerClient(cfg.BrokerUrl)
+	brokerClient, err := broker.NewNatsBrokerClient(cfg.BrokerUrl)
 	if err != nil {
 		log.Println("ERROR: error connecting to broker client")
 		return
 	}
 	defer brokerClient.Close()
+
+	handler := NewHandler(store)
 
 	err = brokerClient.Subscribe(config.BrokerMeasurementSubject, handler.saveMeasurement)
 	if err != nil {
