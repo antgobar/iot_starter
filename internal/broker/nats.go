@@ -9,19 +9,19 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
-type BrokerClient struct {
+type NatsBrokerClient struct {
 	Connection *nats.Conn
 }
 
-func NewNatsBrokerClient(connectionString string) (*BrokerClient, error) {
+func NewNatsBrokerClient(connectionString string) (*NatsBrokerClient, error) {
 	nc, err := nats.Connect(connectionString)
 	if err != nil {
 		return nil, err
 	}
-	return &BrokerClient{Connection: nc}, nil
+	return &NatsBrokerClient{Connection: nc}, nil
 }
 
-func (b BrokerClient) Publish(subject string, measurement *measurement.Measurement) error {
+func (b *NatsBrokerClient) Publish(subject string, measurement *measurement.Measurement) error {
 	if measurement.Timestamp.IsZero() {
 		measurement.Timestamp = time.Now().UTC()
 		log.Println("Timestamp not provided: calculated on publish")
@@ -38,11 +38,11 @@ func (b BrokerClient) Publish(subject string, measurement *measurement.Measureme
 	return nil
 }
 
-func (b BrokerClient) Close() {
+func (b *NatsBrokerClient) Close() {
 	b.Connection.Close()
 }
 
-func (b BrokerClient) Subscribe(subject string, handler MeasurementHandler) error {
+func (b *NatsBrokerClient) Subscribe(subject string, handler MeasurementHandler) error {
 	processMessage := func(msg *nats.Msg) {
 		var measurement measurement.Measurement
 		if err := json.Unmarshal(msg.Data, &measurement); err != nil {

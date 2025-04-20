@@ -4,8 +4,8 @@ import (
 	"context"
 	"iotstarter/internal/broker"
 	"iotstarter/internal/config"
-	"iotstarter/internal/measurement"
 	"iotstarter/internal/store"
+	"iotstarter/internal/transformer"
 	"log"
 	"time"
 )
@@ -30,31 +30,13 @@ func main() {
 	}
 	defer brokerClient.Close()
 
-	handler := NewHandler(store)
+	handler := transformer.NewHandler(store)
 
-	err = brokerClient.Subscribe(config.BrokerMeasurementSubject, handler.saveMeasurement)
+	err = brokerClient.Subscribe(config.BrokerMeasurementSubject, handler.SaveMeasurement)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
 
 	log.Printf("Transformer listening on subject: %s", config.BrokerMeasurementSubject)
 	select {}
-}
-
-func NewHandler(store *store.Store) Handler {
-	return Handler{store: store}
-}
-
-type Handler struct {
-	store *store.Store
-}
-
-func (h Handler) saveMeasurement(m *measurement.Measurement) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
-	defer cancel()
-	err := h.store.SaveMeasurement(ctx, m)
-	if err != nil {
-		log.Println(err.Error())
-	}
-	log.Println("Stored measurement under id", m.ID, "for device id", m.DeviceId)
 }
