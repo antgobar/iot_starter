@@ -32,7 +32,7 @@ func NewServer(addr string, handler *Handler) Server {
 }
 
 func (s Server) Run(appName string) {
-	log.Println(appName+"starting on", s.server.Addr)
+	log.Println(appName, "starting on", s.server.Addr)
 	if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Could not listen on %s: %v", s.server.Addr, err)
 	}

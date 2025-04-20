@@ -58,7 +58,7 @@ func (h *Handler) registerDevice(w http.ResponseWriter, r *http.Request) {
 
 	err := h.store.RegisterDevice(ctx, location)
 	if err != nil {
-		log.Println("ERROR:" + err.Error())
+		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error registering device", http.StatusInternalServerError)
 		return
 	}
@@ -70,7 +70,7 @@ func (h *Handler) getDevices(w http.ResponseWriter, r *http.Request) {
 
 	devices, err := h.store.GetDevices(ctx)
 	if err != nil {
-		log.Println("ERROR:" + err.Error())
+		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error retrieving devices", http.StatusInternalServerError)
 		return
 	}
