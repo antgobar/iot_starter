@@ -10,7 +10,7 @@ import (
 )
 
 type NatsBrokerClient struct {
-	Connection *nats.Conn
+	nc *nats.Conn
 }
 
 func NewNatsBrokerClient(connectionString string) (*NatsBrokerClient, error) {
@@ -18,7 +18,7 @@ func NewNatsBrokerClient(connectionString string) (*NatsBrokerClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &NatsBrokerClient{Connection: nc}, nil
+	return &NatsBrokerClient{nc: nc}, nil
 }
 
 func (b *NatsBrokerClient) Publish(subject string, measurement *model.Measurement) error {
@@ -31,7 +31,7 @@ func (b *NatsBrokerClient) Publish(subject string, measurement *model.Measuremen
 		return err
 	}
 
-	if err := b.Connection.Publish(subject, data); err != nil {
+	if err := b.nc.Publish(subject, data); err != nil {
 		return err
 	}
 
@@ -39,7 +39,11 @@ func (b *NatsBrokerClient) Publish(subject string, measurement *model.Measuremen
 }
 
 func (b *NatsBrokerClient) Close() {
-	b.Connection.Close()
+	err := b.nc.Drain()
+	if err != nil {
+		log.Println("Error draining NATS", err.Error())
+	}
+	b.nc.Close()
 }
 
 func (b *NatsBrokerClient) Subscribe(subject string, handler MeasurementHandler) error {
@@ -51,7 +55,7 @@ func (b *NatsBrokerClient) Subscribe(subject string, handler MeasurementHandler)
 		}
 		go handler(&measurement)
 	}
-	_, err := b.Connection.Subscribe(subject, processMessage)
+	_, err := b.nc.Subscribe(subject, processMessage)
 	if err != nil {
 		return err
 	}
