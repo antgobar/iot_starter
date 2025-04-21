@@ -5,7 +5,6 @@ import (
 	"sync"
 )
 
-// broker is a simple in-memory implementation of Broker using channels and goroutines.
 type memoryBroker struct {
 	publishCh   chan *publishRequest
 	subscribeCh chan *subscribeRequest
@@ -13,21 +12,18 @@ type memoryBroker struct {
 	mu          sync.Mutex
 }
 
-// publishRequest represents a publish action.
 type publishRequest struct {
 	subject string
 	msg     *model.Measurement
 	ack     chan error
 }
 
-// subscribeRequest represents a subscribe action.
 type subscribeRequest struct {
 	subject string
 	handler MeasurementHandler
 	ack     chan error
 }
 
-// NewBroker creates and starts a new Broker instance.
 func NewMemoryBroker() Broker {
 	b := &memoryBroker{
 		publishCh:   make(chan *publishRequest),
@@ -38,7 +34,6 @@ func NewMemoryBroker() Broker {
 	return b
 }
 
-// run is the internal event loop handling publishes and subscribes.
 func (b *memoryBroker) run() {
 	for {
 		select {
@@ -53,7 +48,6 @@ func (b *memoryBroker) run() {
 			handlers := b.handlers[pub.subject]
 			b.mu.Unlock()
 
-			// Dispatch to subscribers
 			for _, handler := range handlers {
 				go handler(pub.msg)
 			}
@@ -62,14 +56,12 @@ func (b *memoryBroker) run() {
 	}
 }
 
-// Subscribe registers a MeasurementHandler to a subject.
 func (b *memoryBroker) Subscribe(subject string, handler MeasurementHandler) error {
 	ack := make(chan error)
 	b.subscribeCh <- &subscribeRequest{subject: subject, handler: handler, ack: ack}
 	return <-ack
 }
 
-// Publish sends a Measurement to all subscribers of the subject.
 func (b *memoryBroker) Publish(subject string, msg *model.Measurement) error {
 	ack := make(chan error)
 	b.publishCh <- &publishRequest{subject: subject, msg: msg, ack: ack}
