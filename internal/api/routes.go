@@ -3,14 +3,25 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"iotstarter/internal/broker"
 	"iotstarter/internal/config"
 	"iotstarter/internal/model"
+	"iotstarter/internal/store"
 	"log"
 	"net/http"
 	"time"
 )
 
-func registerUserRoutes(h *Handler) *http.ServeMux {
+type Handler struct {
+	store  *store.Store
+	broker broker.Broker
+}
+
+func NewHandler(store *store.Store, broker broker.Broker) *Handler {
+	return &Handler{store, broker}
+}
+
+func (h *Handler) registerUserRoutes() *http.ServeMux {
 	mux := http.NewServeMux()
 
 	if h.store != nil {
