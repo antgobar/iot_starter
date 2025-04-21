@@ -5,6 +5,7 @@ import (
 	"iotstarter/internal/api"
 	"iotstarter/internal/broker"
 	"iotstarter/internal/config"
+	"iotstarter/internal/consumer"
 	"iotstarter/internal/store"
 	"log"
 	"time"
@@ -31,6 +32,10 @@ func main() {
 	apiHandler := api.NewHandler(store, brokerClient)
 
 	server := api.NewServer(apiAddr, apiHandler)
+	go server.Run("IOT Monolith")
 
-	server.Run("IOT Monolith")
+	consumerHandler := consumer.NewHandler(store, brokerClient)
+	go consumerHandler.Run()
+
+	select {}
 }

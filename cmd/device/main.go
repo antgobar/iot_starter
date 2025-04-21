@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"iotstarter/internal/config"
+	"flag"
 	"iotstarter/internal/measurement"
 	"log"
 	"math/rand"
@@ -12,9 +12,17 @@ import (
 )
 
 func main() {
-	gatewayUrl := config.MustLoadEnv("GATEWAY_URL")
+	mFlag := flag.Bool("m", false, "Run in mode m (uses port 8080)")
 
-	url := gatewayUrl + "/measurements"
+	// Parse command-line flags
+	flag.Parse()
+
+	// Determine port based on flag
+	port := "8081"
+	if *mFlag {
+		port = "8080"
+	}
+	url := "http://localhost:" + port + "/measurements"
 	log.Println("Sending data to: ", url)
 	for {
 		measurement := measurement.Measurement{

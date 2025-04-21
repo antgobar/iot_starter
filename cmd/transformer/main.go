@@ -4,8 +4,8 @@ import (
 	"context"
 	"iotstarter/internal/broker"
 	"iotstarter/internal/config"
+	"iotstarter/internal/consumer"
 	"iotstarter/internal/store"
-	"iotstarter/internal/transformer"
 	"log"
 	"time"
 )
@@ -28,13 +28,6 @@ func main() {
 	}
 	defer brokerClient.Close()
 
-	handler := transformer.NewHandler(store)
-
-	err = brokerClient.Subscribe(config.BrokerMeasurementSubject, handler.SaveMeasurement)
-	if err != nil {
-		log.Fatalln(err.Error())
-	}
-
-	log.Printf("Transformer listening on subject: %s", config.BrokerMeasurementSubject)
-	select {}
+	handler := consumer.NewHandler(store, brokerClient)
+	handler.Run()
 }
