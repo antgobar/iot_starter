@@ -49,7 +49,7 @@ func (b *NatsBrokerClient) Subscribe(subject string, handler MeasurementHandler)
 			log.Printf("Error decoding message: %v", err)
 			return
 		}
-		handler(&measurement)
+		go handler(&measurement)
 	}
 	_, err := b.Connection.Subscribe(subject, processMessage)
 	if err != nil {
