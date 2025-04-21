@@ -2,7 +2,7 @@ package broker
 
 import (
 	"encoding/json"
-	"iotstarter/internal/measurement"
+	"iotstarter/internal/model"
 	"log"
 	"time"
 
@@ -21,7 +21,7 @@ func NewNatsBrokerClient(connectionString string) (*NatsBrokerClient, error) {
 	return &NatsBrokerClient{Connection: nc}, nil
 }
 
-func (b *NatsBrokerClient) Publish(subject string, measurement *measurement.Measurement) error {
+func (b *NatsBrokerClient) Publish(subject string, measurement *model.Measurement) error {
 	if measurement.Timestamp.IsZero() {
 		measurement.Timestamp = time.Now().UTC()
 		log.Println("Timestamp not provided: calculated on publish")
@@ -44,7 +44,7 @@ func (b *NatsBrokerClient) Close() {
 
 func (b *NatsBrokerClient) Subscribe(subject string, handler MeasurementHandler) error {
 	processMessage := func(msg *nats.Msg) {
-		var measurement measurement.Measurement
+		var measurement model.Measurement
 		if err := json.Unmarshal(msg.Data, &measurement); err != nil {
 			log.Printf("Error decoding message: %v", err)
 			return

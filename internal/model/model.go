@@ -1,4 +1,4 @@
-package measurement
+package model
 
 import (
 	"time"

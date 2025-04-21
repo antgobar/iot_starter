@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"iotstarter/internal/config"
-	"iotstarter/internal/measurement"
+	"iotstarter/internal/model"
 	"log"
 	"net/http"
 	"time"
@@ -80,7 +80,7 @@ func (h *Handler) getDevices(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) saveMeasurement(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	measurement := &measurement.Measurement{}
+	measurement := &model.Measurement{}
 	if err := json.NewDecoder(r.Body).Decode(&measurement); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return

@@ -3,7 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
-	"iotstarter/internal/measurement"
+	"iotstarter/internal/model"
 	"log"
 	"os"
 	"time"
@@ -30,7 +30,7 @@ func (s *Store) Close() {
 }
 
 func (s *Store) RegisterDevice(ctx context.Context, location string) error {
-	newDevice := measurement.Device{
+	newDevice := model.Device{
 		Location:  location,
 		CreatedAt: time.Now().UTC(),
 	}
@@ -46,7 +46,7 @@ func (s *Store) RegisterDevice(ctx context.Context, location string) error {
 	return nil
 }
 
-func (s *Store) GetDevices(ctx context.Context) ([]measurement.Device, error) {
+func (s *Store) GetDevices(ctx context.Context) ([]model.Device, error) {
 	sql := `SELECT id, location, created_at FROM devices`
 	rows, err := s.db.Query(ctx, sql)
 	if err != nil {
@@ -54,9 +54,9 @@ func (s *Store) GetDevices(ctx context.Context) ([]measurement.Device, error) {
 	}
 	defer rows.Close()
 
-	var devices []measurement.Device
+	var devices []model.Device
 	for rows.Next() {
-		var d measurement.Device
+		var d model.Device
 		if err := rows.Scan(&d.ID, &d.Location, &d.CreatedAt); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
@@ -68,14 +68,14 @@ func (s *Store) GetDevices(ctx context.Context) ([]measurement.Device, error) {
 	return devices, nil
 }
 
-func (s *Store) SaveMeasurement(ctx context.Context, m *measurement.Measurement) error {
+func (s *Store) SaveMeasurement(ctx context.Context, m *model.Measurement) error {
 	log.Println("reached saved measurement", time.Now(), m)
 	sql := `
 		INSERT INTO measurements (device_id, name, value, unit, timestamp)
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, device_id, name, value, unit, timestamp 
 		`
-	var storedM measurement.Measurement
+	var storedM model.Measurement
 	row := s.db.QueryRow(ctx, sql, m.DeviceId, m.Name, m.Value, m.Unit, m.Timestamp)
 	err := row.Scan(
 		&storedM.ID, &storedM.DeviceId, &storedM.Name, &storedM.Value, &storedM.Unit, &storedM.Timestamp,
@@ -86,7 +86,7 @@ func (s *Store) SaveMeasurement(ctx context.Context, m *measurement.Measurement)
 	return nil
 }
 
-func (s *Store) GetDeviceMeasurements(ctx context.Context, deviceId int, start, end time.Time) ([]measurement.Measurement, error) {
+func (s *Store) GetDeviceMeasurements(ctx context.Context, deviceId int, start, end time.Time) ([]model.Measurement, error) {
 	sql := `
 		SELECT * FROM measurements
 		WHERE device_id = $1
@@ -98,9 +98,9 @@ func (s *Store) GetDeviceMeasurements(ctx context.Context, deviceId int, start, 
 	}
 	defer rows.Close()
 
-	var measurements = make([]measurement.Measurement, 0)
+	var measurements = make([]model.Measurement, 0)
 	for rows.Next() {
-		var m measurement.Measurement
+		var m model.Measurement
 		if err := rows.Scan(&m.ID, &m.DeviceId, &m.Name, &m.Value, &m.Unit, &m.Timestamp); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}

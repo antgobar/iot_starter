@@ -35,7 +35,7 @@ func main() {
 	go server.Run("IOT Monolith")
 
 	consumerHandler := consumer.NewHandler(store, brokerClient)
-	go consumerHandler.Run()
+	consumerHandler.Run()
 
 	select {}
 }

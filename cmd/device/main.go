@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
-	"iotstarter/internal/measurement"
+	"iotstarter/internal/model"
 	"log"
 	"math/rand"
 	"net/http"
@@ -12,20 +12,18 @@ import (
 )
 
 func main() {
-	mFlag := flag.Bool("m", false, "Run in mode m (uses port 8080)")
-
-	// Parse command-line flags
+	monolithPort := flag.Bool("m", false, "Run in mode m (uses port 8080)")
 	flag.Parse()
 
-	// Determine port based on flag
 	port := "8081"
-	if *mFlag {
+	if *monolithPort {
 		port = "8080"
 	}
 	url := "http://localhost:" + port + "/measurements"
 	log.Println("Sending data to: ", url)
+
 	for {
-		measurement := measurement.Measurement{
+		measurement := model.Measurement{
 			DeviceId:  1,
 			Name:      "temperature",
 			Value:     rand.Float64() * 10,
@@ -40,7 +38,7 @@ func main() {
 	}
 }
 
-func sendMeasurement(url string, measurement measurement.Measurement) error {
+func sendMeasurement(url string, measurement model.Measurement) error {
 	jsonData, err := json.Marshal(measurement)
 	if err != nil {
 		return err

@@ -1,10 +1,10 @@
 package broker
 
-import "iotstarter/internal/measurement"
+import "iotstarter/internal/model"
 
-type MeasurementHandler func(msg *measurement.Measurement)
+type MeasurementHandler func(msg *model.Measurement)
 
 type Broker interface {
-	Publish(subject string, msg *measurement.Measurement) error
+	Publish(subject string, msg *model.Measurement) error
 	Subscribe(subject string, handler MeasurementHandler) error
 }

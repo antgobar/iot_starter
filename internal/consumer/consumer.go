@@ -4,19 +4,20 @@ import (
 	"context"
 	"iotstarter/internal/broker"
 	"iotstarter/internal/config"
-	"iotstarter/internal/measurement"
+	"iotstarter/internal/model"
 	"iotstarter/internal/store"
 	"log"
 	"time"
 )
 
 type Handler struct {
-	store  *store.Store
-	broker broker.Broker
+	store     *store.Store
+	broker    broker.Broker
+	consumers []string
 }
 
 func NewHandler(store *store.Store, broker broker.Broker) *Handler {
-	return &Handler{store, broker}
+	return &Handler{store, broker, nil}
 }
 
 func (h *Handler) registerConsumers() {
@@ -24,9 +25,10 @@ func (h *Handler) registerConsumers() {
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
+	h.consumers = append(h.consumers, config.BrokerMeasurementSubject)
 }
 
-func (h *Handler) saveMeasurement(m *measurement.Measurement) {
+func (h *Handler) saveMeasurement(m *model.Measurement) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 	err := h.store.SaveMeasurement(ctx, m)
@@ -38,6 +40,6 @@ func (h *Handler) saveMeasurement(m *measurement.Measurement) {
 
 func (h *Handler) Run() {
 	h.registerConsumers()
-	log.Printf("Transformer listening on subject: %s", config.BrokerMeasurementSubject)
+	log.Printf("Transformer listening on subject(s): %s", h.consumers)
 	select {}
 }

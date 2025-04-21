@@ -2,7 +2,7 @@ package transformer
 
 import (
 	"context"
-	"iotstarter/internal/measurement"
+	"iotstarter/internal/model"
 	"iotstarter/internal/store"
 	"log"
 	"time"
@@ -16,7 +16,7 @@ func NewHandler(store *store.Store) *Handler {
 	return &Handler{store: store}
 }
 
-func (h *Handler) SaveMeasurement(m *measurement.Measurement) {
+func (h *Handler) SaveMeasurement(m *model.Measurement) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 	err := h.store.SaveMeasurement(ctx, m)
