@@ -20,7 +20,7 @@ func main() {
 		log.Fatalln(err.Error())
 	}
 
-	handler := api.NewHandler(store, nil)
+	handler := api.NewHandler().WithStore(store)
 	server := api.NewServer(apiAddr, handler)
 	server.Run("DashboardApi")
 }

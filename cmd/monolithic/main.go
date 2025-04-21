@@ -29,7 +29,7 @@ func main() {
 		log.Fatalln(err.Error())
 	}
 
-	apiHandler := api.NewHandler(store, brokerClient)
+	apiHandler := api.NewHandler().WithStore(store).WithBroker(brokerClient)
 
 	server := api.NewServer(apiAddr, apiHandler)
 	go server.Run("IOT Monolith")

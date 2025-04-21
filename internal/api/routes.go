@@ -17,8 +17,18 @@ type Handler struct {
 	broker broker.Broker
 }
 
-func NewHandler(store *store.Store, broker broker.Broker) *Handler {
-	return &Handler{store, broker}
+func NewHandler() *Handler {
+	return &Handler{}
+}
+
+func (h *Handler) WithStore(store *store.Store) *Handler {
+	h.store = store
+	return h
+}
+
+func (h *Handler) WithBroker(broker broker.Broker) *Handler {
+	h.broker = broker
+	return h
 }
 
 func (h *Handler) registerUserRoutes() *http.ServeMux {

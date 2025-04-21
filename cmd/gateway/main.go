@@ -17,7 +17,7 @@ func main() {
 	}
 	defer brokerClient.Close()
 
-	handler := api.NewHandler(nil, brokerClient)
+	handler := api.NewHandler().WithBroker(brokerClient)
 	server := api.NewServer(gatewayAddr, handler)
 	server.Run("Gateway")
 }
