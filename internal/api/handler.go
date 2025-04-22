@@ -45,6 +45,9 @@ func (h *Handler) registerUserRoutes() *http.ServeMux {
 		mux.HandleFunc("POST /devices", h.registerDevice)
 		mux.HandleFunc("GET /devices", h.getDevices)
 		mux.HandleFunc("GET /devices/{id}/measurements", h.getDeviceMeasurements)
+		mux.HandleFunc("GET /measurements", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "/devices", http.StatusFound)
+		})
 	}
 
 	if h.broker != nil {
