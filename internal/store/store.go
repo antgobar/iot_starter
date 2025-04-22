@@ -27,7 +27,6 @@ func (s *Store) Close() {
 	s.db.Close()
 }
 
-
 func (s *Store) setUpTables(ctx context.Context) error {
 	err := s.execSQLFile(ctx, "sql/schema.sql")
 	if err != nil {

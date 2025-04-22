@@ -8,7 +8,6 @@ import (
 	"time"
 )
 
-
 func (s *Store) RegisterDevice(ctx context.Context, location string) error {
 	newDevice := model.Device{
 		Location:  location,

@@ -13,7 +13,6 @@ import (
 
 func main() {
 	dbUrl := config.MustLoadEnv("DATABASE_URL")
-	brokerUrl := config.MustLoadEnv("BROKER_URL")
 	apiAddr := config.MustLoadEnv("API_ADDR")
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*5))
@@ -24,11 +23,7 @@ func main() {
 		log.Fatalln(err.Error())
 	}
 
-	brokerClient, err := broker.NewNatsBrokerClient(brokerUrl)
-	if err != nil {
-		log.Fatalln(err.Error())
-	}
-
+	brokerClient := broker.NewMemoryBroker()
 	apiHandler := api.NewHandler().WithStore(store).WithBroker(brokerClient)
 
 	server := api.NewServer(apiAddr, apiHandler)
