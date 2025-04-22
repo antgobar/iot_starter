@@ -5,6 +5,7 @@ import (
 	"iotstarter/internal/api"
 	"iotstarter/internal/config"
 	"iotstarter/internal/store"
+	"iotstarter/internal/views"
 	"log"
 	"time"
 )
@@ -20,7 +21,9 @@ func main() {
 		log.Fatalln(err.Error())
 	}
 
-	handler := api.NewHandler().WithStore(store)
+	views := views.NewViews()
+
+	handler := api.NewHandler().WithStore(store).WithViews(views)
 	server := api.NewServer(apiAddr, handler)
-	server.Run("DashboardApi")
+	server.Run("Dashboard")
 }

@@ -23,23 +23,21 @@ func getMeasurementsQueryParams(r *http.Request) (*measurementsQuery, error) {
 	r.URL.RawQuery = decodedQuery
 
 	startStr := r.URL.Query().Get("start")
-	if startStr == "" {
-		return nil, errors.New("missing parameter: start")
-	}
-
-	start, err := time.Parse(time.RFC3339, startStr)
-	if err != nil {
-		return nil, errors.New("invalid start date format. Use RFC3339 (YYYY-MM-DDTHH:MM:SSZ)")
+	var start time.Time
+	if startStr != "" {
+		start, err = time.Parse(time.RFC3339, startStr)
+		if err != nil {
+			return nil, errors.New("invalid start date format. Use RFC3339 (YYYY-MM-DDTHH:MM:SSZ)")
+		}
 	}
 
 	endStr := r.URL.Query().Get("end")
-	if endStr == "" {
-		return nil, errors.New("missing parameter: end")
-	}
-
-	end, err := time.Parse(time.RFC3339, endStr)
-	if err != nil {
-		return nil, errors.New("invalid end date format. Use RFC3339 (YYYY-MM-DDTHH:MM:SSZ)")
+	end := time.Now().UTC()
+	if endStr != "" {
+		end, err = time.Parse(time.RFC3339, endStr)
+		if err != nil {
+			return nil, errors.New("invalid end date format. Use RFC3339 (YYYY-MM-DDTHH:MM:SSZ)")
+		}
 	}
 
 	deviceId, err := strconv.Atoi(r.PathValue("id"))

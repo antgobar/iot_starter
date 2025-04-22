@@ -7,6 +7,7 @@ import (
 	"iotstarter/internal/config"
 	"iotstarter/internal/model"
 	"iotstarter/internal/store"
+	"iotstarter/internal/views"
 	"log"
 	"net/http"
 	"time"
@@ -15,6 +16,7 @@ import (
 type Handler struct {
 	store  *store.Store
 	broker broker.Broker
+	views  *views.Views
 }
 
 func NewHandler() *Handler {
@@ -31,6 +33,11 @@ func (h *Handler) WithBroker(broker broker.Broker) *Handler {
 	return h
 }
 
+func (h *Handler) WithViews(views *views.Views) *Handler {
+	h.views = views
+	return h
+}
+
 func (h *Handler) registerUserRoutes() *http.ServeMux {
 	mux := http.NewServeMux()
 
@@ -43,7 +50,17 @@ func (h *Handler) registerUserRoutes() *http.ServeMux {
 	if h.broker != nil {
 		mux.HandleFunc("POST /measurements", h.saveMeasurement)
 	}
+
+	if h.views != nil {
+		mux.HandleFunc("GET /", h.getIndexPage)
+	}
+
 	return mux
+}
+
+func (h *Handler) getIndexPage(w http.ResponseWriter, r *http.Request) {
+	view := h.views.IndexPage(w)
+	view.Render(nil)
 }
 
 func (h *Handler) getDeviceMeasurements(w http.ResponseWriter, r *http.Request) {
