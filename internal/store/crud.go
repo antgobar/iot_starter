@@ -2,24 +2,31 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"iotstarter/internal/auth"
 	"iotstarter/internal/model"
 	"log"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func (s *Store) RegisterDevice(ctx context.Context, location string) error {
 	newDevice := model.Device{
 		Location:  location,
 		CreatedAt: time.Now().UTC(),
+		ApiKey:    auth.GenerateApiKey(),
 	}
 	sql := `
-        INSERT INTO devices (location, created_at)
-        VALUES ($1, $2)
-        RETURNING id
+        INSERT INTO devices (location, created_at, api_key)
+        VALUES ($1, $2, $3)
+        RETURNING id, api_key
     `
 	var deviceId int
-	if err := s.db.QueryRow(ctx, sql, newDevice.Location, newDevice.CreatedAt).Scan(&deviceId); err != nil {
+	var apiKey string
+	row := s.db.QueryRow(ctx, sql, newDevice.Location, newDevice.CreatedAt, newDevice.ApiKey)
+	if err := row.Scan(&deviceId, &apiKey); err != nil {
 		return fmt.Errorf("failed to insert device %v: %w", newDevice, err)
 	}
 	return nil
@@ -45,6 +52,24 @@ func (s *Store) GetDevices(ctx context.Context) ([]model.Device, error) {
 		return nil, fmt.Errorf("rows iteration error: %w", err)
 	}
 	return devices, nil
+}
+
+func (s *Store) GetDeviceById(ctx context.Context, deviceId int) (*model.Device, error) {
+	sql := `
+		SELECT id, location, created_at, api_key
+		FROM devices 
+		WHERE id = $1
+		`
+	var device model.Device
+	row := s.db.QueryRow(ctx, sql, deviceId)
+	if err := row.Scan(&device.ID, &device.Location, &device.CreatedAt, &device.ApiKey); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrDeviceNotFound
+		}
+		return nil, fmt.Errorf("failed to retrieve device id %v: %w", deviceId, err)
+	}
+	return &device, nil
+
 }
 
 func (s *Store) SaveMeasurement(ctx context.Context, m *model.Measurement) error {

@@ -19,7 +19,7 @@ func NewStore(ctx context.Context, url string) (*Store, error) {
 		return nil, err
 	}
 	store := Store{db: pool}
-	
+
 	err = store.setUpTables(ctx)
 	if err != nil {
 		return nil, err

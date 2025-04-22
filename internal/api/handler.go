@@ -10,6 +10,7 @@ import (
 	"iotstarter/internal/views"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -44,6 +45,7 @@ func (h *Handler) registerUserRoutes() *http.ServeMux {
 	if h.store != nil {
 		mux.HandleFunc("POST /devices", h.registerDevice)
 		mux.HandleFunc("GET /devices", h.getDevices)
+		mux.HandleFunc("GET /devices/{id}", h.getDeviceById)
 		mux.HandleFunc("GET /devices/{id}/measurements", h.getDeviceMeasurements)
 		mux.HandleFunc("GET /measurements", func(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/devices", http.StatusFound)
@@ -117,6 +119,31 @@ func (h *Handler) getDevices(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(devices)
+}
+
+func (h *Handler) getDeviceById(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
+	defer cancel()
+
+	deviceId, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "Invalid device Id", http.StatusBadRequest)
+		return
+	}
+
+	device, err := h.store.GetDeviceById(ctx, deviceId)
+	if err == store.ErrDeviceNotFound {
+		http.Error(w, "Device not found", http.StatusNotFound)
+		return
+	}
+
+	if err != nil {
+		log.Println("ERROR:", err.Error())
+		http.Error(w, "Error retrieving devices", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(device)
 }
 
 func (h *Handler) saveMeasurement(w http.ResponseWriter, r *http.Request) {
