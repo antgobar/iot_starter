@@ -12,9 +12,9 @@ BEGIN;
 CREATE TABLE IF NOT EXISTS devices (
     id SERIAL PRIMARY KEY,
     location TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    api_key TEXT NOT NULL UNIQUE
     -- user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    -- api_key TEXT NOT NULL UNIQUE,
 );
 
 -- measurements table

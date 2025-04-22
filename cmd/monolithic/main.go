@@ -7,6 +7,7 @@ import (
 	"iotstarter/internal/config"
 	"iotstarter/internal/consumer"
 	"iotstarter/internal/store"
+	"iotstarter/internal/views"
 	"log"
 	"time"
 )
@@ -23,8 +24,10 @@ func main() {
 		log.Fatalln(err.Error())
 	}
 
+	views := views.NewViews()
+
 	brokerClient := broker.NewMemoryBroker()
-	apiHandler := api.NewHandler().WithStore(store).WithBroker(brokerClient)
+	apiHandler := api.NewHandler().WithStore(store).WithBroker(brokerClient).WithViews(views)
 
 	server := api.NewServer(apiAddr, apiHandler)
 	go server.Run("IOT Monolith")
