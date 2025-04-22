@@ -99,12 +99,14 @@ func (h *Handler) registerDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.store.RegisterDevice(ctx, location)
+	device, err := h.store.RegisterDevice(ctx, location)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error registering device", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(device)
 }
 
 func (h *Handler) getDevices(w http.ResponseWriter, r *http.Request) {

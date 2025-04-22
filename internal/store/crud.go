@@ -12,8 +12,8 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (s *Store) RegisterDevice(ctx context.Context, location string) error {
-	newDevice := model.Device{
+func (s *Store) RegisterDevice(ctx context.Context, location string) (*model.Device, error) {
+	device := model.Device{
 		Location:  location,
 		CreatedAt: time.Now().UTC(),
 		ApiKey:    auth.GenerateApiKey(),
@@ -21,19 +21,17 @@ func (s *Store) RegisterDevice(ctx context.Context, location string) error {
 	sql := `
         INSERT INTO devices (location, created_at, api_key)
         VALUES ($1, $2, $3)
-        RETURNING id, api_key
+        RETURNING id, location, created_at, api_key
     `
-	var deviceId int
-	var apiKey string
-	row := s.db.QueryRow(ctx, sql, newDevice.Location, newDevice.CreatedAt, newDevice.ApiKey)
-	if err := row.Scan(&deviceId, &apiKey); err != nil {
-		return fmt.Errorf("failed to insert device %v: %w", newDevice, err)
+	row := s.db.QueryRow(ctx, sql, device.Location, device.CreatedAt, device.ApiKey)
+	if err := row.Scan(&device.ID, &device.Location, &device.CreatedAt, &device.ApiKey); err != nil {
+		return nil, fmt.Errorf("failed to insert device %v: %w", device, err)
 	}
-	return nil
+	return &device, nil
 }
 
 func (s *Store) GetDevices(ctx context.Context) ([]model.Device, error) {
-	sql := `SELECT id, location, created_at FROM devices`
+	sql := `SELECT id, location, created_at, api_key FROM devices`
 	rows, err := s.db.Query(ctx, sql)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query devices: %w", err)
@@ -43,7 +41,7 @@ func (s *Store) GetDevices(ctx context.Context) ([]model.Device, error) {
 	var devices []model.Device
 	for rows.Next() {
 		var d model.Device
-		if err := rows.Scan(&d.ID, &d.Location, &d.CreatedAt); err != nil {
+		if err := rows.Scan(&d.ID, &d.Location, &d.CreatedAt, &d.ApiKey); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 		devices = append(devices, d)
