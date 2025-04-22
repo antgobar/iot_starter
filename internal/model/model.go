@@ -17,4 +17,5 @@ type Device struct {
 	ID        int       `json:"id"`
 	Location  string    `json:"location"`
 	CreatedAt time.Time `json:"createdAt"`
+	ApiKey    string    `json:"apiKey"`
 }
