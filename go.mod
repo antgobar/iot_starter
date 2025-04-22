@@ -3,6 +3,7 @@ module iotstarter
 go 1.24.2
 
 require (
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.4
 	github.com/nats-io/nats.go v1.41.1
 )
