@@ -7,12 +7,12 @@ import (
 )
 
 type Handler struct {
-	store     *store.Store
+	store     store.Store
 	broker    broker.Broker
 	consumers []Consumer
 }
 
-func NewHandler(store *store.Store, broker broker.Broker) *Handler {
+func NewHandler(store store.Store, broker broker.Broker) *Handler {
 	return &Handler{store, broker, nil}
 }
 

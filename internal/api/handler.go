@@ -15,7 +15,7 @@ import (
 )
 
 type Handler struct {
-	store  *store.Store
+	store  store.Store
 	broker broker.Broker
 	views  *views.Views
 }
@@ -24,7 +24,7 @@ func NewHandler() *Handler {
 	return &Handler{}
 }
 
-func (h *Handler) WithStore(store *store.Store) *Handler {
+func (h *Handler) WithStore(store store.Store) *Handler {
 	h.store = store
 	return h
 }

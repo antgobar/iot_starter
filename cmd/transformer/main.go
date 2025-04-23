@@ -18,7 +18,7 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*5))
 	defer cancel()
-	store, err := store.NewStore(ctx, dbUrl)
+	store, err := store.NewPostgresStore(ctx, dbUrl)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}

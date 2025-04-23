@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (s *Store) RegisterDevice(ctx context.Context, location string) (*model.Device, error) {
+func (s *PostgresStore) RegisterDevice(ctx context.Context, location string) (*model.Device, error) {
 	device := model.Device{
 		Location:  location,
 		CreatedAt: time.Now().UTC(),
@@ -30,7 +30,7 @@ func (s *Store) RegisterDevice(ctx context.Context, location string) (*model.Dev
 	return &device, nil
 }
 
-func (s *Store) GetDevices(ctx context.Context) ([]model.Device, error) {
+func (s *PostgresStore) GetDevices(ctx context.Context) ([]model.Device, error) {
 	sql := `SELECT id, location, created_at, api_key FROM devices`
 	rows, err := s.db.Query(ctx, sql)
 	if err != nil {
@@ -52,7 +52,7 @@ func (s *Store) GetDevices(ctx context.Context) ([]model.Device, error) {
 	return devices, nil
 }
 
-func (s *Store) GetDeviceById(ctx context.Context, deviceId int) (*model.Device, error) {
+func (s *PostgresStore) GetDeviceById(ctx context.Context, deviceId int) (*model.Device, error) {
 	sql := `
 		SELECT id, location, created_at, api_key
 		FROM devices 
@@ -70,7 +70,7 @@ func (s *Store) GetDeviceById(ctx context.Context, deviceId int) (*model.Device,
 
 }
 
-func (s *Store) SaveMeasurement(ctx context.Context, m *model.Measurement) error {
+func (s *PostgresStore) SaveMeasurement(ctx context.Context, m *model.Measurement) error {
 	log.Println("reached saved measurement", time.Now(), m)
 	sql := `
 		INSERT INTO measurements (device_id, name, value, unit, timestamp)
@@ -88,7 +88,7 @@ func (s *Store) SaveMeasurement(ctx context.Context, m *model.Measurement) error
 	return nil
 }
 
-func (s *Store) GetDeviceMeasurements(ctx context.Context, deviceId int, start, end time.Time) ([]model.Measurement, error) {
+func (s *PostgresStore) GetDeviceMeasurements(ctx context.Context, deviceId int, start, end time.Time) ([]model.Measurement, error) {
 	sql := `
 		SELECT * FROM measurements
 		WHERE device_id = $1
