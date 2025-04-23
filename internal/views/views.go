@@ -22,7 +22,9 @@ func newView(w http.ResponseWriter, tmpl *template.Template) View {
 	return View{w, tmpl}
 }
 
-func NewViews() *Views { return &Views{} }
+func NewViews() *Views {
+	return &Views{}
+}
 
 func (v *Views) IndexPage(w http.ResponseWriter) View {
 	tmpl := compileTemplate(baseTemplateDir + "index.html")

@@ -47,9 +47,6 @@ func (h *Handler) registerUserRoutes() *http.ServeMux {
 		mux.HandleFunc("GET /devices", h.getDevices)
 		mux.HandleFunc("GET /devices/{id}", h.getDeviceById)
 		mux.HandleFunc("GET /devices/{id}/measurements", h.getDeviceMeasurements)
-		mux.HandleFunc("GET /measurements", func(w http.ResponseWriter, r *http.Request) {
-			http.Redirect(w, r, "/devices", http.StatusFound)
-		})
 	}
 
 	if h.broker != nil {
@@ -58,14 +55,18 @@ func (h *Handler) registerUserRoutes() *http.ServeMux {
 
 	if h.views != nil {
 		mux.HandleFunc("GET /", h.getIndexPage)
+
 	}
 
 	return mux
 }
 
 func (h *Handler) getIndexPage(w http.ResponseWriter, r *http.Request) {
-	view := h.views.IndexPage(w)
-	view.Render(nil)
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+	http.ServeFile(w, r, "static/html/index.html")
 }
 
 func (h *Handler) getDeviceMeasurements(w http.ResponseWriter, r *http.Request) {
