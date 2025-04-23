@@ -6,7 +6,6 @@ import (
 	"iotstarter/internal/config"
 	"iotstarter/internal/consumer"
 	"iotstarter/internal/store"
-	"log"
 	"time"
 )
 
@@ -16,16 +15,11 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*5))
 	defer cancel()
-	store, err := store.NewPostgresStore(ctx, dbUrl)
-	if err != nil {
-		log.Fatalln(err.Error())
-	}
 
-	brokerClient, err := broker.NewNatsBrokerClient(brokerUrl)
-	if err != nil {
-		log.Println("ERROR: error connecting to broker client")
-		return
-	}
+	store := store.NewPostgresStore(ctx, dbUrl)
+	defer store.Close()
+
+	brokerClient := broker.NewNatsBrokerClient(brokerUrl)
 	defer brokerClient.Close()
 
 	handler := consumer.NewHandler(store, brokerClient)

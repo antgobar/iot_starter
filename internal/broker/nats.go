@@ -13,12 +13,12 @@ type NatsBrokerClient struct {
 	nc *nats.Conn
 }
 
-func NewNatsBrokerClient(connectionString string) (*NatsBrokerClient, error) {
+func NewNatsBrokerClient(connectionString string) *NatsBrokerClient {
 	nc, err := nats.Connect(connectionString)
 	if err != nil {
-		return nil, err
+		log.Fatalln("Error connecting to message broker", err.Error())
 	}
-	return &NatsBrokerClient{nc: nc}, nil
+	return &NatsBrokerClient{nc: nc}
 }
 
 func (b *NatsBrokerClient) Publish(subject string, measurement *model.Measurement) error {

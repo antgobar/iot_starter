@@ -43,8 +43,10 @@ func (h *Handler) registerUserRoutes() *http.ServeMux {
 	mux := http.NewServeMux()
 
 	if h.store != nil {
+		mux.HandleFunc("POST /api/users", h.registerUser)
 		mux.HandleFunc("POST /api/devices", h.registerDevice)
 		mux.HandleFunc("GET /api/devices", h.getDevices)
+		mux.HandleFunc("PATCH /api/devices/{id}/reauth", h.reauthDevice)
 		mux.HandleFunc("GET /api/devices/{id}", h.getDeviceById)
 		mux.HandleFunc("GET /api/devices/{id}/measurements", h.getDeviceMeasurements)
 	}
@@ -69,6 +71,22 @@ func (h *Handler) getIndexPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.ServeFile(w, r, "static/html/index.html")
+}
+
+func (h *Handler) registerUser(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
+	defer cancel()
+
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+	user, err := h.store.RegisterUser(ctx, username, password)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
 }
 
 func (h *Handler) getDeviceMeasurements(w http.ResponseWriter, r *http.Request) {
@@ -102,10 +120,29 @@ func (h *Handler) registerDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	device, err := h.store.RegisterDevice(ctx, location)
+	device, err := h.store.RegisterDevice(ctx, 1, location)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error registering device", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(device)
+}
+
+func (h *Handler) reauthDevice(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
+	defer cancel()
+
+	deviceId, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "Invalid device Id", http.StatusBadRequest)
+		return
+	}
+	device, err := h.store.ReauthDevice(ctx, 1, deviceId)
+	if err != nil {
+		log.Println("ERROR:", err.Error())
+		http.Error(w, "Error reauthing device", http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

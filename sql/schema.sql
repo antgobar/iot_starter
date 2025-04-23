@@ -1,20 +1,21 @@
 BEGIN;
 
 -- users table
--- CREATE TABLE IF NOT EXISTS users (
---     id SERIAL PRIMARY KEY,
---     username TEXT NOT NULL UNIQUE,
---     hashed_password TEXT NOT NULL,
---     created_at TIMESTAMP DEFAULT NOW()
--- );
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    hashed_password TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    active BOOLEAN DEFAULT TRUE
+);
 
 -- devices table
 CREATE TABLE IF NOT EXISTS devices (
     id SERIAL PRIMARY KEY,
     location TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),
-    api_key TEXT NOT NULL UNIQUE
-    -- user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    api_key TEXT NOT NULL UNIQUE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- measurements table

@@ -4,17 +4,13 @@ import (
 	"iotstarter/internal/api"
 	"iotstarter/internal/broker"
 	"iotstarter/internal/config"
-	"log"
 )
 
 func main() {
 	brokerUrl := config.MustLoadEnv("BROKER_URL")
 	gatewayAddr := config.MustLoadEnv("GATEWAY_ADDR")
 
-	brokerClient, err := broker.NewNatsBrokerClient(brokerUrl)
-	if err != nil {
-		log.Fatalln("ERROR: ", err.Error())
-	}
+	brokerClient := broker.NewNatsBrokerClient(brokerUrl)
 	defer brokerClient.Close()
 
 	handler := api.NewHandler().WithBroker(brokerClient)

@@ -13,18 +13,18 @@ type PostgresStore struct {
 	db *pgxpool.Pool
 }
 
-func NewPostgresStore(ctx context.Context, url string) (*PostgresStore, error) {
+func NewPostgresStore(ctx context.Context, url string) *PostgresStore {
 	pool, err := pgxpool.New(ctx, url)
 	if err != nil {
-		return nil, err
+		log.Fatalln("Error connecting to PostgresDB", err.Error())
 	}
 	store := PostgresStore{db: pool}
 
 	err = store.setUpTables(ctx)
 	if err != nil {
-		return nil, err
+		log.Fatalln("Error setting up tables", err.Error())
 	}
-	return &store, nil
+	return &store
 }
 
 func (s *PostgresStore) Close() {
@@ -45,12 +45,10 @@ func (s *PostgresStore) execSQLFile(ctx context.Context, path string) error {
 	if err != nil {
 		return fmt.Errorf("could not read SQL file: %w", err)
 	}
-
 	sql := string(sqlBytes)
 	_, err = s.db.Exec(ctx, sql)
 	if err != nil {
 		return fmt.Errorf("failed to execute SQL: %w", err)
 	}
-
 	return nil
 }

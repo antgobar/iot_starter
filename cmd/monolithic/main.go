@@ -8,7 +8,6 @@ import (
 	"iotstarter/internal/consumer"
 	"iotstarter/internal/store"
 	"iotstarter/internal/views"
-	"log"
 	"time"
 )
 
@@ -19,10 +18,8 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*5))
 	defer cancel()
 
-	store, err := store.NewPostgresStore(ctx, dbUrl)
-	if err != nil {
-		log.Fatalln(err.Error())
-	}
+	store := store.NewPostgresStore(ctx, dbUrl)
+	defer store.Close()
 
 	views := views.NewViews()
 

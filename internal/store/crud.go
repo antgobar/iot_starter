@@ -12,22 +12,70 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (s *PostgresStore) RegisterDevice(ctx context.Context, location string) (*model.Device, error) {
-	device := model.Device{
-		Location:  location,
-		CreatedAt: time.Now().UTC(),
-		ApiKey:    auth.GenerateApiKey(),
-	}
+func (s *PostgresStore) RegisterUser(ctx context.Context, userName string, password string) (*model.User, error) {
 	sql := `
-        INSERT INTO devices (location, created_at, api_key)
+		INSERT INTO users (username, hashed_password)
+		VALUES ($1, $2)
+		Returning id, username, created_at, active
+	`
+
+	hashedPassword, err := auth.Encrypt(password)
+	if err != nil {
+		return nil, err
+	}
+
+	user := model.User{
+		Username:       userName,
+		HashedPassword: hashedPassword,
+	}
+
+	row := s.db.QueryRow(ctx, sql, user.Username, user.HashedPassword)
+	if err := row.Scan(&user.ID, &user.Username, &user.CreatedAt, &user.Active); err != nil {
+		return nil, fmt.Errorf("failed to register user %v: %w", user, err)
+	}
+
+	return &user, nil
+}
+
+func (s *PostgresStore) RegisterDevice(ctx context.Context, userId int, location string) (*model.Device, error) {
+	sql := `
+        INSERT INTO devices (user_id, location, api_key)
         VALUES ($1, $2, $3)
-        RETURNING id, location, created_at, api_key
+        RETURNING id, user_id, location, created_at, api_key
     `
-	row := s.db.QueryRow(ctx, sql, device.Location, device.CreatedAt, device.ApiKey)
-	if err := row.Scan(&device.ID, &device.Location, &device.CreatedAt, &device.ApiKey); err != nil {
-		return nil, fmt.Errorf("failed to insert device %v: %w", device, err)
+
+	device := model.Device{
+		UserId:   userId,
+		Location: location,
+		ApiKey:   auth.GenerateApiKey(),
+	}
+
+	row := s.db.QueryRow(ctx, sql, device.UserId, device.Location, device.ApiKey)
+	if err := row.Scan(&device.ID, &device.UserId, &device.Location, &device.CreatedAt, &device.ApiKey); err != nil {
+		return nil, fmt.Errorf("failed to register device %v: %w", device, err)
 	}
 	return &device, nil
+}
+
+func (s *PostgresStore) ReauthDevice(ctx context.Context, userId int, deviceId int) (*model.Device, error) {
+	sql := `
+		UPDATE devices
+		SET api_key = $1
+		WHERE id = $2 AND user_id = $3
+		RETURNING id, user_id, location, created_at, api_key
+	`
+	device := model.Device{
+		ID:     deviceId,
+		UserId: userId,
+		ApiKey: auth.GenerateApiKey(),
+	}
+
+	row := s.db.QueryRow(ctx, sql, device.ApiKey, device.ID, device.UserId)
+	if err := row.Scan(&device.ID, &device.UserId, &device.Location, &device.CreatedAt, &device.ApiKey); err != nil {
+		return nil, fmt.Errorf("failed to register device %v: %w", device, err)
+	}
+	return &device, nil
+
 }
 
 func (s *PostgresStore) GetDevices(ctx context.Context) ([]model.Device, error) {
