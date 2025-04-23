@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
-	"iotstarter/internal/logging"
 	"iotstarter/internal/model"
 	"log"
 	"math/rand"
@@ -13,7 +12,6 @@ import (
 )
 
 func main() {
-	logging.SetUp()
 	monolithPort := flag.Bool("m", false, "Run in mode m (uses port 8080)")
 	flag.Parse()
 
