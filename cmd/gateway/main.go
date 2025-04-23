@@ -4,10 +4,12 @@ import (
 	"iotstarter/internal/api"
 	"iotstarter/internal/broker"
 	"iotstarter/internal/config"
+	"iotstarter/internal/logging"
 	"log"
 )
 
 func main() {
+	logging.SetUp()
 	brokerUrl := config.MustLoadEnv("BROKER_URL")
 	gatewayAddr := config.MustLoadEnv("GATEWAY_ADDR")
 

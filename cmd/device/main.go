@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
+	"iotstarter/internal/logging"
 	"iotstarter/internal/model"
 	"log"
 	"math/rand"
@@ -12,6 +13,7 @@ import (
 )
 
 func main() {
+	logging.SetUp()
 	monolithPort := flag.Bool("m", false, "Run in mode m (uses port 8080)")
 	flag.Parse()
 
@@ -19,7 +21,7 @@ func main() {
 	if *monolithPort {
 		port = "8080"
 	}
-	url := "http://localhost:" + port + "/measurements"
+	url := "http://localhost:" + port + "/api/measurements"
 	log.Println("Sending data to: ", url)
 
 	for {

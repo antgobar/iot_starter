@@ -26,6 +26,13 @@ func (h *Handler) consumersSubjects() []string {
 
 func (h *Handler) Run() {
 	h.registerConsumers()
+	for _, consumer := range h.consumers {
+		err := h.broker.Subscribe(consumer.subject, consumer.handler)
+		if err != nil {
+			log.Fatalln(err.Error())
+		}
+		h.consumers = append(h.consumers, consumer)
+	}
 	log.Printf("Transformer listening on subject(s): %s", h.consumersSubjects())
 	select {}
 }

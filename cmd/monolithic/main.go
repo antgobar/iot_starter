@@ -6,6 +6,7 @@ import (
 	"iotstarter/internal/broker"
 	"iotstarter/internal/config"
 	"iotstarter/internal/consumer"
+	"iotstarter/internal/logging"
 	"iotstarter/internal/store"
 	"iotstarter/internal/views"
 	"log"
@@ -13,6 +14,7 @@ import (
 )
 
 func main() {
+	logging.SetUp()
 	dbUrl := config.MustLoadEnv("DATABASE_URL")
 	apiAddr := config.MustLoadEnv("API_ADDR")
 

@@ -1,0 +1,26 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    color: #333;
+}
+nav {
+    background: #007acc;
+    padding: 1rem;
+}
+nav a {
+    color: white;
+    margin-right: 1rem;
+    text-decoration: none;
+}
+#app {
+padding: 2rem;      
+}
+button {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+}
+input, select {
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+}

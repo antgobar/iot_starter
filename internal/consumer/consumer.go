@@ -19,17 +19,11 @@ func newConsumer(subject string, handler broker.MeasurementHandler) Consumer {
 }
 
 func (h *Handler) registerConsumers() {
+	h.consumers = nil
 	var consumers []Consumer = []Consumer{
 		newConsumer(config.BrokerMeasurementSubject, h.saveMeasurement),
 	}
-
-	for _, consumer := range consumers {
-		err := h.broker.Subscribe(consumer.subject, consumer.handler)
-		if err != nil {
-			log.Fatalln(err.Error())
-		}
-		h.consumers = append(h.consumers, consumer)
-	}
+	h.consumers = append(h.consumers, consumers...)
 }
 
 func (h *Handler) saveMeasurement(m *model.Measurement) {

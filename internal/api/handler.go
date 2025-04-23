@@ -43,17 +43,19 @@ func (h *Handler) registerUserRoutes() *http.ServeMux {
 	mux := http.NewServeMux()
 
 	if h.store != nil {
-		mux.HandleFunc("POST /devices", h.registerDevice)
-		mux.HandleFunc("GET /devices", h.getDevices)
-		mux.HandleFunc("GET /devices/{id}", h.getDeviceById)
-		mux.HandleFunc("GET /devices/{id}/measurements", h.getDeviceMeasurements)
+		mux.HandleFunc("POST /api/devices", h.registerDevice)
+		mux.HandleFunc("GET /api/devices", h.getDevices)
+		mux.HandleFunc("GET /api/devices/{id}", h.getDeviceById)
+		mux.HandleFunc("GET /api/devices/{id}/measurements", h.getDeviceMeasurements)
 	}
 
 	if h.broker != nil {
-		mux.HandleFunc("POST /measurements", h.saveMeasurement)
+		mux.HandleFunc("POST /api/measurements", h.saveMeasurement)
 	}
 
 	if h.views != nil {
+		fs := http.FileServer(http.Dir("static"))
+		mux.Handle("GET /static/", http.StripPrefix("/static/", fs))
 		mux.HandleFunc("GET /", h.getIndexPage)
 
 	}

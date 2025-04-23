@@ -4,6 +4,7 @@ import (
 	"context"
 	"iotstarter/internal/api"
 	"iotstarter/internal/config"
+	"iotstarter/internal/logging"
 	"iotstarter/internal/store"
 	"iotstarter/internal/views"
 	"log"
@@ -11,6 +12,7 @@ import (
 )
 
 func main() {
+	logging.SetUp()
 	dbUrl := config.MustLoadEnv("DATABASE_URL")
 	apiAddr := config.MustLoadEnv("API_ADDR")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*5))

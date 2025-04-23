@@ -1,8 +1,8 @@
 package views
 
 import (
+	"html/template"
 	"net/http"
-	"text/template"
 )
 
 const baseTemplateDir = "templates/"
@@ -14,7 +14,7 @@ type View struct {
 	tmpl *template.Template
 }
 
-func (v *View) Render(data any) {
+func (v *View) RenderTemplate(data any) {
 	v.tmpl.Execute(v.w, data)
 }
 
@@ -26,8 +26,8 @@ func NewViews() *Views {
 	return &Views{}
 }
 
-func (v *Views) IndexPage(w http.ResponseWriter) View {
-	tmpl := compileTemplate(baseTemplateDir + "index.html")
+func (v *Views) TestPage(w http.ResponseWriter) View {
+	tmpl := compileTemplate(baseTemplateDir + "testPage.html")
 	return newView(w, tmpl)
 }
 
