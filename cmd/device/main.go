@@ -49,6 +49,7 @@ func sendMeasurement(url string, measurement model.Measurement) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-api-key", "superSecret")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

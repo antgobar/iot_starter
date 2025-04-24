@@ -18,3 +18,7 @@ func Encrypt(password string) (string, error) {
 	}
 	return string(hash), nil
 }
+
+func IsAuthedToken(cookeVal string) bool {
+	return cookeVal == "superSecret"
+}

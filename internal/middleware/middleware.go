@@ -51,13 +51,9 @@ func isPublicPath(path string) bool {
 
 func isSavingMeasurement(r *http.Request) bool {
 	if r.URL.Path == "/api/measurements" && r.Method == "POST" {
-		return true
+		return auth.IsAuthedToken(r.Header.Get("x-api-key"))
 	}
 	return false
-}
-
-func isAuthed(cookieVal string) bool {
-	return cookieVal == "superSecret"
 }
 
 func authMiddleware(next http.Handler) http.Handler {
@@ -77,7 +73,7 @@ func authMiddleware(next http.Handler) http.Handler {
 			http.Error(w, "No session value", http.StatusUnauthorized)
 			return
 		}
-		if !isAuthed(cookieVal) {
+		if !auth.IsAuthedToken(cookieVal) {
 			http.Error(w, "No permissions to access this resource", http.StatusForbidden)
 			return
 		}
