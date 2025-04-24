@@ -56,10 +56,8 @@ func (h *Handler) registerUserRoutes() *http.ServeMux {
 	}
 
 	if h.views != nil {
-		fs := http.FileServer(http.Dir("static"))
-		mux.Handle("GET /static/", http.StripPrefix("/static/", fs))
+		mux.Handle("GET /static/", http.StripPrefix("/static/", http.HandlerFunc(h.loadStaticResources)))
 		mux.HandleFunc("GET /", h.getIndexPage)
-
 	}
 
 	return mux
@@ -71,6 +69,12 @@ func (h *Handler) getIndexPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.ServeFile(w, r, "static/html/index.html")
+}
+
+func (h *Handler) loadStaticResources(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "public, max-age=31536000")
+	fs := http.FileServer(http.Dir("static"))
+	fs.ServeHTTP(w, r)
 }
 
 func (h *Handler) registerUser(w http.ResponseWriter, r *http.Request) {
