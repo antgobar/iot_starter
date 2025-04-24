@@ -118,22 +118,22 @@ func (s *PostgresStore) GetDeviceById(ctx context.Context, deviceId int) (*model
 
 }
 
-func (s *PostgresStore) SaveMeasurement(ctx context.Context, m *model.Measurement) error {
+func (s *PostgresStore) SaveMeasurement(ctx context.Context, m *model.Measurement) (*model.Measurement, error) {
 	log.Println("reached saved measurement", time.Now(), m)
 	sql := `
 		INSERT INTO measurements (device_id, name, value, unit, timestamp)
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, device_id, name, value, unit, timestamp 
 		`
-	var storedM model.Measurement
+
 	row := s.db.QueryRow(ctx, sql, m.DeviceId, m.Name, m.Value, m.Unit, m.Timestamp)
 	err := row.Scan(
-		&storedM.ID, &storedM.DeviceId, &storedM.Name, &storedM.Value, &storedM.Unit, &storedM.Timestamp,
+		&m.ID, &m.DeviceId, &m.Name, &m.Value, &m.Unit, &m.Timestamp,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to insert measurement %v: %w", storedM, err)
+		return m, fmt.Errorf("failed to insert measurement %v: %w", m, err)
 	}
-	return nil
+	return m, nil
 }
 
 func (s *PostgresStore) GetDeviceMeasurements(ctx context.Context, deviceId int, start, end time.Time) ([]model.Measurement, error) {
@@ -160,5 +160,25 @@ func (s *PostgresStore) GetDeviceMeasurements(ctx context.Context, deviceId int,
 		return nil, fmt.Errorf("rows iteration error: %w", err)
 	}
 	return measurements, nil
+}
 
+func (s *PostgresStore) CreateUserSession(ctx context.Context, userId int) (*model.Session, error) {
+	sql := `
+		INSERT INTO sessions user_id, token, expires_at
+		VALUES ($1, $2, $3, $4)
+		RETURNING (id, user_id, token, created_at, expires_at)
+	`
+
+	sesh := model.Session{
+		UserId:    userId,
+		Token:     "foo",
+		ExpiresAt: time.Now().UTC().Add(3 * time.Hour),
+	}
+
+	row := s.db.QueryRow(ctx, sql, sesh.UserId, sesh.Token, sesh.ExpiresAt)
+	if err := row.Scan(&sesh.ID, &sesh.UserId, &sesh.Token, &sesh.CreatedAt, &sesh.ExpiresAt); err != nil {
+		return nil, fmt.Errorf("failed to create sesh %v: %w", sesh, err)
+	}
+
+	return &sesh, nil
 }

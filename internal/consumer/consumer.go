@@ -29,7 +29,7 @@ func (h *Handler) registerConsumers() {
 func (h *Handler) saveMeasurement(m *model.Measurement) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
-	err := h.store.SaveMeasurement(ctx, m)
+	m, err := h.store.SaveMeasurement(ctx, m)
 	if err != nil {
 		log.Println(err.Error())
 	}

@@ -49,6 +49,13 @@ func isPublicPath(path string) bool {
 	return false
 }
 
+func isSavingMeasurement(r *http.Request) bool {
+	if r.URL.Path == "/api/measurements" && r.Method == "POST" {
+		return true
+	}
+	return false
+}
+
 func isAuthed(cookieVal string) bool {
 	return cookieVal == "superSecret"
 }
@@ -59,6 +66,12 @@ func authMiddleware(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
+
+		if isSavingMeasurement(r) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		cookieVal, err := auth.GetCookieValue(r)
 		if err != nil {
 			http.Error(w, "No session value", http.StatusUnauthorized)
