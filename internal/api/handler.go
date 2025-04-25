@@ -44,8 +44,9 @@ func (h *Handler) registerUserRoutes() *http.ServeMux {
 	mux := http.NewServeMux()
 
 	if h.store != nil {
-		mux.HandleFunc("POST /register", h.registerUser)
-		mux.HandleFunc("POST /login", h.logInUser)
+		mux.HandleFunc("POST /api/auth/register", h.registerUser)
+		mux.HandleFunc("POST /api/auth/login", h.logInUser)
+		mux.HandleFunc("POST /api/auth/logout", h.logOutUser)
 		mux.HandleFunc("POST /api/devices", h.registerDevice)
 		mux.HandleFunc("GET /api/devices", h.getDevices)
 		mux.HandleFunc("PATCH /api/devices/{id}/reauth", h.reauthDevice)
@@ -125,6 +126,11 @@ func (h *Handler) logInUser(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
+}
+
+func (h *Handler) logOutUser(w http.ResponseWriter, r *http.Request) {
+	auth.ClearCookie(w)
+	http.Redirect(w, r, "/", http.StatusAccepted)
 }
 
 func (h *Handler) getDeviceMeasurements(w http.ResponseWriter, r *http.Request) {
