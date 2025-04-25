@@ -24,7 +24,7 @@ func main() {
 	views := views.NewViews()
 
 	brokerClient := broker.NewMemoryBroker()
-	apiHandler := api.NewHandler().WithStore(store).WithBroker(brokerClient).WithViews(views)
+	apiHandler := api.NewHandler().WithViewsAndStore(views, store).WithBroker(brokerClient)
 
 	server := api.NewServer(apiAddr, apiHandler)
 	go server.Run("IOT Monolith")

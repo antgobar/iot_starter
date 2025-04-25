@@ -35,9 +35,9 @@ func (h *Handler) WithBroker(broker broker.Broker) *Handler {
 	return h
 }
 
-func (h *Handler) WithViews(views *views.Views) *Handler {
+func (h *Handler) WithViewsAndStore(views *views.Views, store store.Store) *Handler {
 	h.views = views
-	return h
+	return h.WithStore(store)
 }
 
 func (h *Handler) registerUserRoutes() *http.ServeMux {

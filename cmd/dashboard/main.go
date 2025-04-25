@@ -20,7 +20,7 @@ func main() {
 
 	views := views.NewViews()
 
-	handler := api.NewHandler().WithStore(store).WithViews(views)
+	handler := api.NewHandler().WithViewsAndStore(views, store)
 	server := api.NewServer(apiAddr, handler)
 	server.Run("Dashboard")
 }
