@@ -73,24 +73,14 @@ func (h *Handler) getHomePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// http.ServeFile(w, r, "static/html/index.html")
-	view, err := h.views.Page("home")
+	err := h.views.RenderPage(w, r, "home", nil)
 	if err != nil {
 		log.Println("error getting home view", err.Error())
-		return
-	}
-	err = view.RenderTemplate(w, r, nil)
-	if err != nil {
-		log.Println("error rendering home view", err.Error())
 		return
 	}
 }
 
 func (h *Handler) getDevicesPage(w http.ResponseWriter, r *http.Request) {
-	view, err := h.views.Page("devices")
-	if err != nil {
-		log.Println("error getting home view", err.Error())
-		return
-	}
 	type deviceT struct {
 		Name string
 		Type string
@@ -102,10 +92,9 @@ func (h *Handler) getDevicesPage(w http.ResponseWriter, r *http.Request) {
 	devices := devicesT{
 		Devices: []deviceT{{Name: "device1", Type: "sensor"}, {Name: "device2", Type: "light"}},
 	}
-
-	err = view.RenderTemplate(w, r, devices)
+	err := h.views.RenderPage(w, r, "devices", devices)
 	if err != nil {
-		log.Println("error rendering home view", err.Error())
+		log.Println("error getting rendering page", err.Error())
 		return
 	}
 }

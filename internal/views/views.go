@@ -20,35 +20,6 @@ type Views struct {
 	templates *CompliedTemplates
 }
 
-type View struct {
-	tmpl *template.Template
-}
-
-func (c *CompliedTemplates) Get(name string) *template.Template {
-	tmpl, exists := (*c)[name]
-	if !exists {
-		log.Printf("Template %s not found", name)
-		return nil
-	}
-	return tmpl
-}
-
-func (v *View) RenderTemplate(w http.ResponseWriter, r *http.Request, data any) error {
-	var tmplName string
-
-	if r.Header.Get("HX-Request") == "true" {
-		tmplName = "content"
-	} else {
-		tmplName = "base"
-	}
-
-	return v.tmpl.ExecuteTemplate(w, tmplName, data)
-}
-
-func newView(tmpl *template.Template) View {
-	return View{tmpl}
-}
-
 func NewViews() *Views {
 	templates, err := compileTemplates(htmlPages)
 	if err != nil {
@@ -57,13 +28,23 @@ func NewViews() *Views {
 	return &Views{templates}
 }
 
-func (v *Views) Page(name string) (View, error) {
+func (v *Views) RenderPage(w http.ResponseWriter, r *http.Request, name string, data any) error {
 	tmpl, exists := (*v.templates)[name]
 	if !exists {
-		return View{}, errors.New(name + " template not found")
+		return errors.New(name + " template not found")
 	}
-	return newView(tmpl), nil
+
+	var tmplName string
+
+	if r.Header.Get("HX-Request") == "true" {
+		tmplName = "content"
+	} else {
+		tmplName = "base"
+	}
+
+	return tmpl.ExecuteTemplate(w, tmplName, data)
 }
+
 
 func compileTemplates(pages []string) (*CompliedTemplates, error) {
 	var templates = make(CompliedTemplates)
