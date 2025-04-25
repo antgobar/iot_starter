@@ -1,0 +1,8 @@
+{{define "content"}}
+<h1>Your Devices</h1>
+<ul>
+    {{range .Devices}}
+    <li>{{.Name}} ({{.Type}})</li>
+    {{end}}
+</ul>
+{{end}}

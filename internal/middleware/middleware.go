@@ -58,25 +58,25 @@ func isSavingMeasurement(r *http.Request) bool {
 
 func authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if isPublicPath(r.URL.Path) {
-			next.ServeHTTP(w, r)
-			return
-		}
+		// if isPublicPath(r.URL.Path) {
+		// 	next.ServeHTTP(w, r)
+		// 	return
+		// }
 
-		if isSavingMeasurement(r) {
-			next.ServeHTTP(w, r)
-			return
-		}
+		// if isSavingMeasurement(r) {
+		// 	next.ServeHTTP(w, r)
+		// 	return
+		// }
 
-		cookieVal, err := auth.GetCookieValue(r)
-		if err != nil {
-			http.Error(w, "No session value", http.StatusUnauthorized)
-			return
-		}
-		if !auth.IsAuthedToken(cookieVal) {
-			http.Error(w, "No permissions to access this resource", http.StatusForbidden)
-			return
-		}
+		// cookieVal, err := auth.GetCookieValue(r)
+		// if err != nil {
+		// 	http.Error(w, "No session value", http.StatusUnauthorized)
+		// 	return
+		// }
+		// if !auth.IsAuthedToken(cookieVal) {
+		// 	http.Error(w, "No permissions to access this resource", http.StatusForbidden)
+		// 	return
+		// }
 
 		next.ServeHTTP(w, r)
 	})

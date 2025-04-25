@@ -60,18 +60,54 @@ func (h *Handler) registerUserRoutes() *http.ServeMux {
 
 	if h.views != nil {
 		mux.Handle("GET /static/", http.StripPrefix("/static/", http.HandlerFunc(h.loadStaticResources)))
-		mux.HandleFunc("GET /", h.getIndexPage)
+		mux.HandleFunc("GET /", h.getHomePage)
+		mux.HandleFunc("GET /devices", h.getDevicesPage)
 	}
 
 	return mux
 }
 
-func (h *Handler) getIndexPage(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) getHomePage(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
 	}
-	http.ServeFile(w, r, "static/html/index.html")
+	// http.ServeFile(w, r, "static/html/index.html")
+	view, err := h.views.Page("home")
+	if err != nil {
+		log.Println("error getting home view", err.Error())
+		return
+	}
+	err = view.RenderTemplate(w, r, nil)
+	if err != nil {
+		log.Println("error rendering home view", err.Error())
+		return
+	}
+}
+
+func (h *Handler) getDevicesPage(w http.ResponseWriter, r *http.Request) {
+	view, err := h.views.Page("devices")
+	if err != nil {
+		log.Println("error getting home view", err.Error())
+		return
+	}
+	type deviceT struct {
+		Name string
+		Type string
+	}
+	type devicesT struct {
+		Devices []deviceT
+	}
+
+	devices := devicesT{
+		Devices: []deviceT{{Name: "device1", Type: "sensor"}, {Name: "device2", Type: "light"}},
+	}
+
+	err = view.RenderTemplate(w, r, devices)
+	if err != nil {
+		log.Println("error rendering home view", err.Error())
+		return
+	}
 }
 
 func (h *Handler) loadStaticResources(w http.ResponseWriter, r *http.Request) {
