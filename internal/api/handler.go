@@ -86,6 +86,12 @@ func (h *Handler) registerUser(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 	user, err := h.store.RegisterUser(ctx, username, password)
+
+	if err == store.ErrUsernameTaken {
+		http.Error(w, "username taken", http.StatusConflict)
+		return
+	}
+
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "error registering user", http.StatusInternalServerError)
@@ -104,7 +110,7 @@ func (h *Handler) logInUser(w http.ResponseWriter, r *http.Request) {
 	user, err := h.store.GetUserFromCreds(ctx, username, password)
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, "error logging in", http.StatusForbidden)
+		http.Error(w, "invalid credentials", http.StatusForbidden)
 		return
 	}
 

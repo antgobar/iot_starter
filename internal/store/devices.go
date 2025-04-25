@@ -2,12 +2,9 @@ package store
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"iotstarter/internal/auth"
 	"iotstarter/internal/model"
-
-	"github.com/jackc/pgx/v5"
 )
 
 func (s *PostgresStore) RegisterDevice(ctx context.Context, userId int, location string) (*model.Device, error) {
@@ -82,7 +79,7 @@ func (s *PostgresStore) GetDeviceById(ctx context.Context, deviceId int) (*model
 	var device model.Device
 	row := s.db.QueryRow(ctx, sql, deviceId)
 	if err := row.Scan(&device.ID, &device.Location, &device.CreatedAt, &device.ApiKey); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		if isNoRowsFoundError(err) {
 			return nil, ErrDeviceNotFound
 		}
 		return nil, fmt.Errorf("failed to retrieve device id %v: %w", deviceId, err)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"iotstarter/internal/auth"
 	"iotstarter/internal/model"
+	"log"
 )
 
 func (s *PostgresStore) RegisterUser(ctx context.Context, userName string, password string) (*model.User, error) {
@@ -17,7 +18,8 @@ func (s *PostgresStore) RegisterUser(ctx context.Context, userName string, passw
 
 	hashedPassword, err := auth.HashPassword(password)
 	if err != nil {
-		return nil, err
+		log.Println("ERROR:", err.Error())
+		return nil, auth.ErrHashingError
 	}
 
 	user := model.User{
@@ -26,7 +28,12 @@ func (s *PostgresStore) RegisterUser(ctx context.Context, userName string, passw
 	}
 
 	row := s.db.QueryRow(ctx, sql, user.Username, user.HashedPassword)
-	if err := row.Scan(&user.ID, &user.Username, &user.CreatedAt, &user.Active); err != nil {
+	err = row.Scan(&user.ID, &user.Username, &user.CreatedAt, &user.Active)
+
+	if isUniqueViolationError(err) {
+		return nil, ErrUsernameTaken
+	}
+	if err != nil {
 		return nil, fmt.Errorf("failed to register user %v: %w", user, err)
 	}
 
@@ -46,6 +53,9 @@ func (s *PostgresStore) GetUserFromCreds(ctx context.Context, userName string, p
 
 	row := s.db.QueryRow(ctx, sql, user.Username)
 	if err := row.Scan(&user.ID, &user.Username, &user.HashedPassword, &user.CreatedAt, &user.Active); err != nil {
+		if isNoRowsFoundError(err) {
+			return nil, ErrUserNotExists
+		}
 		return nil, fmt.Errorf("failed to find user %v: %w", user, err)
 	}
 
