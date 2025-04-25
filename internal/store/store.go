@@ -15,6 +15,7 @@ type Store interface {
 
 type UserStore interface {
 	RegisterUser(ctx context.Context, userName string, password string) (*model.User, error)
+	GetUserFromCreds(ctx context.Context, userName string, password string) (*model.User, error)
 }
 
 type DeviceStore interface {

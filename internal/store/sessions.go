@@ -3,20 +3,21 @@ package store
 import (
 	"context"
 	"fmt"
+	"iotstarter/internal/auth"
 	"iotstarter/internal/model"
 	"time"
 )
 
 func (s *PostgresStore) CreateUserSession(ctx context.Context, userId int) (*model.Session, error) {
 	sql := `
-		INSERT INTO sessions user_id, token, expires_at
-		VALUES ($1, $2, $3, $4)
-		RETURNING (id, user_id, token, created_at, expires_at)
+		INSERT INTO sessions (user_id, token, expires_at)
+		VALUES ($1, $2, $3)
+		RETURNING id, user_id, token, created_at, expires_at
 	`
 
 	sesh := model.Session{
 		UserId:    userId,
-		Token:     "foo",
+		Token:     auth.GenerateUUID(),
 		ExpiresAt: time.Now().UTC().Add(3 * time.Hour),
 	}
 

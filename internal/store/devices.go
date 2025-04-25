@@ -20,7 +20,7 @@ func (s *PostgresStore) RegisterDevice(ctx context.Context, userId int, location
 	device := model.Device{
 		UserId:   userId,
 		Location: location,
-		ApiKey:   auth.GenerateApiKey(),
+		ApiKey:   auth.GenerateUUID(),
 	}
 
 	row := s.db.QueryRow(ctx, sql, device.UserId, device.Location, device.ApiKey)
@@ -40,7 +40,7 @@ func (s *PostgresStore) ReauthDevice(ctx context.Context, userId int, deviceId i
 	device := model.Device{
 		ID:     deviceId,
 		UserId: userId,
-		ApiKey: auth.GenerateApiKey(),
+		ApiKey: auth.GenerateUUID(),
 	}
 
 	row := s.db.QueryRow(ctx, sql, device.ApiKey, device.ID, device.UserId)

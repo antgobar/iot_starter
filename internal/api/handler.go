@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"iotstarter/internal/auth"
 	"iotstarter/internal/broker"
 	"iotstarter/internal/config"
 	"iotstarter/internal/model"
@@ -43,7 +44,8 @@ func (h *Handler) registerUserRoutes() *http.ServeMux {
 	mux := http.NewServeMux()
 
 	if h.store != nil {
-		mux.HandleFunc("POST /api/users", h.registerUser)
+		mux.HandleFunc("POST /register", h.registerUser)
+		mux.HandleFunc("POST /login", h.logInUser)
 		mux.HandleFunc("POST /api/devices", h.registerDevice)
 		mux.HandleFunc("GET /api/devices", h.getDevices)
 		mux.HandleFunc("PATCH /api/devices/{id}/reauth", h.reauthDevice)
@@ -86,9 +88,35 @@ func (h *Handler) registerUser(w http.ResponseWriter, r *http.Request) {
 	user, err := h.store.RegisterUser(ctx, username, password)
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "error registering user", http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
+}
+
+func (h *Handler) logInUser(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
+	defer cancel()
+
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+	user, err := h.store.GetUserFromCreds(ctx, username, password)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "error logging in", http.StatusForbidden)
+		return
+	}
+
+	sesh, err := h.store.CreateUserSession(ctx, user.ID)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "error logging in", http.StatusInternalServerError)
+		return
+	}
+
+	auth.SetCookie(w, sesh.Token)
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
 }
@@ -100,7 +128,7 @@ func (h *Handler) getDeviceMeasurements(w http.ResponseWriter, r *http.Request) 
 	params, err := getMeasurementsQueryParams(r)
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
 

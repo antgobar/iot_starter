@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 	"iotstarter/internal/model"
-	"log"
 	"time"
 )
 
 func (s *PostgresStore) SaveMeasurement(ctx context.Context, m *model.Measurement) (*model.Measurement, error) {
-	log.Println("reached saved measurement", time.Now(), m)
 	sql := `
 		INSERT INTO measurements (device_id, name, value, unit, timestamp)
 		VALUES ($1, $2, $3, $4, $5)
