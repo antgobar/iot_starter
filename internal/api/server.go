@@ -11,7 +11,7 @@ type Server struct {
 }
 
 func NewServer(addr string, h *Handler) Server {
-	stack := middleware.LoadMiddleware()
+	stack := middleware.LoadMiddleware(h.store)
 	mux := h.registerUserRoutes()
 	server := &http.Server{
 		Addr:    addr,

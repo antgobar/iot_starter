@@ -61,7 +61,13 @@ func (h *Handler) registerUserRoutes() *http.ServeMux {
 	if h.views != nil {
 		mux.Handle("GET /static/", http.StripPrefix("/static/", http.HandlerFunc(h.loadStaticResources)))
 		mux.HandleFunc("GET /", h.getHomePage)
+	}
+
+	if h.views != nil && h.store != nil {
 		mux.HandleFunc("GET /devices", h.getDevicesPage)
+		http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "/static/favicon.ico", http.StatusMovedPermanently)
+		})
 	}
 
 	return mux
@@ -189,7 +195,14 @@ func (h *Handler) registerDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	device, err := h.store.RegisterDevice(ctx, 1, location)
+	val := r.Context().Value("userId")
+	userId, ok := val.(int)
+	if !ok {
+		http.Error(w, "User ID not found in context", http.StatusInternalServerError)
+		return
+	}
+
+	device, err := h.store.RegisterDevice(ctx, userId, location)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error registering device", http.StatusInternalServerError)

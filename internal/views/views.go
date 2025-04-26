@@ -45,7 +45,6 @@ func (v *Views) RenderPage(w http.ResponseWriter, r *http.Request, name string, 
 	return tmpl.ExecuteTemplate(w, tmplName, data)
 }
 
-
 func compileTemplates(pages []string) (*CompliedTemplates, error) {
 	var templates = make(CompliedTemplates)
 	for _, p := range pages {

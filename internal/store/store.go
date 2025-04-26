@@ -32,4 +32,5 @@ type MeasurementStore interface {
 
 type SessionStore interface {
 	CreateUserSession(ctx context.Context, userId int) (*model.Session, error)
+	GetUserFromToken(ctx context.Context, token string) (*model.User, error)
 }
