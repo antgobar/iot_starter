@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"iotstarter/internal/auth"
 	"iotstarter/internal/model"
+	"log"
 )
 
 func (s *PostgresStore) RegisterDevice(ctx context.Context, userId int, location string) (*model.Device, error) {
@@ -48,18 +49,22 @@ func (s *PostgresStore) ReauthDevice(ctx context.Context, userId int, deviceId i
 
 }
 
-func (s *PostgresStore) GetDevices(ctx context.Context) ([]model.Device, error) {
-	sql := `SELECT id, location, created_at, api_key FROM devices`
-	rows, err := s.db.Query(ctx, sql)
+func (s *PostgresStore) GetDevices(ctx context.Context, userId int) ([]model.Device, error) {
+	sql := `
+		SELECT id, user_id, location, created_at, api_key 
+		FROM devices
+		WHERE user_id = $1
+	`
+	rows, err := s.db.Query(ctx, sql, userId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query devices: %w", err)
 	}
 	defer rows.Close()
 
-	var devices []model.Device
+	devices := make([]model.Device, 0)
 	for rows.Next() {
 		var d model.Device
-		if err := rows.Scan(&d.ID, &d.Location, &d.CreatedAt, &d.ApiKey); err != nil {
+		if err := rows.Scan(&d.ID, &d.UserId, &d.Location, &d.CreatedAt, &d.ApiKey); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 		devices = append(devices, d)
@@ -67,6 +72,7 @@ func (s *PostgresStore) GetDevices(ctx context.Context) ([]model.Device, error) 
 	if err = rows.Err(); err != nil {
 		return nil, fmt.Errorf("rows iteration error: %w", err)
 	}
+	log.Println("GOT devices for user", userId, "devices", len(devices))
 	return devices, nil
 }
 

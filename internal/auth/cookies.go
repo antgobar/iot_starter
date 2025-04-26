@@ -18,7 +18,7 @@ func GetCookieValue(request *http.Request) (string, error) {
 func SetCookie(w http.ResponseWriter, token string) {
 	cookie := &http.Cookie{
 		Name:     cookieName,
-		Value:    GenerateUUID(),
+		Value:    token,
 		Expires:  time.Now().Add(time.Hour * 2),
 		HttpOnly: true,
 		Secure:   true,

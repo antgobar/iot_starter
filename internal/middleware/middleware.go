@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"iotstarter/internal/auth"
+	"iotstarter/internal/config"
 	"iotstarter/internal/store"
 	"log"
 	"net/http"
@@ -54,6 +55,8 @@ func isPublicPath(path string) bool {
 		"/register",
 		"/static",
 		"/favicon.ico",
+		"/api/auth/login",
+		"/api/auth/register",
 	}
 	for _, publicPrefix := range publicPrefixes {
 		if strings.HasPrefix(path, publicPrefix) {
@@ -88,17 +91,20 @@ func (h *Handler) authMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
+		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 		defer cancel()
 
 		user, err := h.store.GetUserFromToken(ctx, cookieVal)
 		if err != nil {
-			http.Error(w, "No permissions to access this resource", http.StatusForbidden)
+			log.Println(err.Error())
+			http.Error(w, "Unauthenticated", http.StatusUnauthorized)
 			return
 		}
 
-		ctx = context.WithValue(r.Context(), "userId", user.ID)
+		ctx = context.WithValue(r.Context(), config.UserKey, user)
 		r = r.WithContext(ctx)
+
+		log.Println("User set in request context", user)
 
 		next.ServeHTTP(w, r)
 	})

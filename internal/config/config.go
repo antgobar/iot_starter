@@ -14,3 +14,7 @@ func MustLoadEnv(envName string) string {
 	}
 	return env
 }
+
+type RequestContextKey string
+
+const UserKey RequestContextKey = "user"

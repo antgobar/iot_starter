@@ -43,7 +43,7 @@ func (s *PostgresStore) GetUserFromToken(ctx context.Context, token string) (*mo
 		SELECT users.id, users.username, users.created_at, users.active
 		FROM users
 		INNER JOIN sessions ON users.id = sessions.user_id
-		WHERE sessions.token = $1 AND sessions.expires_at > NOW()
+		WHERE sessions.token = $1
 	`
 
 	user := model.User{}
@@ -52,5 +52,5 @@ func (s *PostgresStore) GetUserFromToken(ctx context.Context, token string) (*mo
 	if err := row.Scan(&user.ID, &user.Username, &user.CreatedAt, &user.Active); err != nil {
 		return nil, fmt.Errorf("failed to retrieve user from token %v: %w", user, err)
 	}
-	return &model.User{}, nil
+	return &user, nil
 }

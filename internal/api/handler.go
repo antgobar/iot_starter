@@ -189,20 +189,20 @@ func (h *Handler) registerDevice(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
+	user, err := getUserFromRequest(r)
+	if err != nil {
+		log.Println("ERROR:", err.Error())
+		http.Error(w, "Error getting user", http.StatusUnauthorized)
+		return
+	}
+
 	location := r.FormValue("location")
 	if location == "" {
 		http.Error(w, "location required", http.StatusBadRequest)
 		return
 	}
 
-	val := r.Context().Value("userId")
-	userId, ok := val.(int)
-	if !ok {
-		http.Error(w, "User ID not found in context", http.StatusInternalServerError)
-		return
-	}
-
-	device, err := h.store.RegisterDevice(ctx, userId, location)
+	device, err := h.store.RegisterDevice(ctx, user.ID, location)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error registering device", http.StatusInternalServerError)
@@ -235,7 +235,14 @@ func (h *Handler) getDevices(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	devices, err := h.store.GetDevices(ctx)
+	user, err := getUserFromRequest(r)
+	if err != nil {
+		log.Println("ERROR:", err.Error())
+		http.Error(w, "Error getting user", http.StatusUnauthorized)
+		return
+	}
+
+	devices, err := h.store.GetDevices(ctx, user.ID)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error retrieving devices", http.StatusInternalServerError)

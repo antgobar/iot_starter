@@ -21,7 +21,7 @@ type UserStore interface {
 type DeviceStore interface {
 	RegisterDevice(ctx context.Context, userId int, location string) (*model.Device, error)
 	ReauthDevice(ctx context.Context, userId int, deviceId int) (*model.Device, error)
-	GetDevices(ctx context.Context) ([]model.Device, error)
+	GetDevices(ctx context.Context, userId int) ([]model.Device, error)
 	GetDeviceById(ctx context.Context, deviceId int) (*model.Device, error)
 }
 
