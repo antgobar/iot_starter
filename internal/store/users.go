@@ -9,7 +9,7 @@ import (
 	"log"
 )
 
-func (s *PostgresStore) RegisterUser(ctx context.Context, userName string, password string) (*model.User, error) {
+func (s *PostgresStore) RegisterUser(ctx context.Context, userName string, password string) error {
 	sql := `
 		INSERT INTO users (username, hashed_password)
 		VALUES ($1, $2)
@@ -19,7 +19,7 @@ func (s *PostgresStore) RegisterUser(ctx context.Context, userName string, passw
 	hashedPassword, err := auth.HashPassword(password)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
-		return nil, auth.ErrHashingError
+		return auth.ErrHashingError
 	}
 
 	user := model.User{
@@ -31,13 +31,13 @@ func (s *PostgresStore) RegisterUser(ctx context.Context, userName string, passw
 	err = row.Scan(&user.ID, &user.Username, &user.CreatedAt, &user.Active)
 
 	if isUniqueViolationError(err) {
-		return nil, ErrUsernameTaken
+		return ErrUsernameTaken
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to register user %v: %w", user, err)
+		return fmt.Errorf("failed to register user %v: %w", user, err)
 	}
 
-	return &user, nil
+	return nil
 }
 
 func (s *PostgresStore) GetUserFromCreds(ctx context.Context, userName string, password string) (*model.User, error) {

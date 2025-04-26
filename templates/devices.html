@@ -1,8 +1,21 @@
 {{define "content"}}
 <h1>Your Devices</h1>
-<ul>
-    {{range .Devices}}
-    <li>{{.Name}} ({{.Type}})</li>
-    {{end}}
-</ul>
+<table>
+    <thead>
+        <tr>
+            <th>Location</th>
+            <th>Created At</th>
+            <th>API Key </th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .Devices}}
+        <tr>
+            <td>{{.Location}}</td>
+            <td>{{.CreatedAt}}</td>
+            <td>{{.ApiKey}}</td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
 {{end}}

@@ -14,14 +14,14 @@ type Store interface {
 }
 
 type UserStore interface {
-	RegisterUser(ctx context.Context, userName string, password string) (*model.User, error)
+	RegisterUser(ctx context.Context, userName string, password string) error
 	GetUserFromCreds(ctx context.Context, userName string, password string) (*model.User, error)
 }
 
 type DeviceStore interface {
 	RegisterDevice(ctx context.Context, userId int, location string) (*model.Device, error)
 	ReauthDevice(ctx context.Context, userId int, deviceId int) (*model.Device, error)
-	GetDevices(ctx context.Context, userId int) ([]model.Device, error)
+	GetDevices(ctx context.Context, userId int) ([]*model.Device, error)
 	GetDeviceById(ctx context.Context, deviceId int) (*model.Device, error)
 }
 
@@ -33,4 +33,5 @@ type MeasurementStore interface {
 type SessionStore interface {
 	CreateUserSession(ctx context.Context, userId int) (*model.Session, error)
 	GetUserFromToken(ctx context.Context, token string) (*model.User, error)
+	ClearUserSession(ctx context.Context, userId int) error
 }

@@ -9,13 +9,9 @@ import (
 )
 
 func (s *PostgresStore) CreateUserSession(ctx context.Context, userId int) (*model.Session, error) {
-	deleteSessionSql := `
-		DELETE FROM sessions
-		WHERE user_id = $1
-	`
-	_, err := s.db.Exec(ctx, deleteSessionSql, userId)
+	err := s.ClearUserSession(ctx, userId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to delete existing sessions for user %d: %w", userId, err)
+		return nil, ErrDeviceNotFound
 	}
 
 	sql := `
@@ -53,4 +49,16 @@ func (s *PostgresStore) GetUserFromToken(ctx context.Context, token string) (*mo
 		return nil, fmt.Errorf("failed to retrieve user from token %v: %w", user, err)
 	}
 	return &user, nil
+}
+
+func (s *PostgresStore) ClearUserSession(ctx context.Context, userId int) error {
+	sql := `
+		DELETE FROM sessions
+		WHERE user_id = $1
+	`
+	_, err := s.db.Exec(ctx, sql, userId)
+	if err != nil {
+		return fmt.Errorf("failed to delete existing sessions for user %d: %w", userId, err)
+	}
+	return nil
 }

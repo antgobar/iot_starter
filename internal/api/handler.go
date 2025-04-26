@@ -64,10 +64,10 @@ func (h *Handler) registerUserRoutes() *http.ServeMux {
 	}
 
 	if h.views != nil && h.store != nil {
-		mux.HandleFunc("GET /devices", h.getDevicesPage)
 		http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/static/favicon.ico", http.StatusMovedPermanently)
 		})
+		mux.HandleFunc("GET /devices", h.getDevicesPage)
 	}
 
 	return mux
@@ -78,7 +78,6 @@ func (h *Handler) getHomePage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	// http.ServeFile(w, r, "static/html/index.html")
 	err := h.views.RenderPage(w, r, "home", nil)
 	if err != nil {
 		log.Println("error getting home view", err.Error())
@@ -87,21 +86,33 @@ func (h *Handler) getHomePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) getDevicesPage(w http.ResponseWriter, r *http.Request) {
-	type deviceT struct {
-		Name string
-		Type string
-	}
-	type devicesT struct {
-		Devices []deviceT
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
+	defer cancel()
+
+	user, err := getUserFromRequest(r)
+	if err != nil {
+		log.Println("ERROR:", err.Error())
+		http.Error(w, "Error getting user", http.StatusUnauthorized)
+		return
 	}
 
-	devices := devicesT{
-		Devices: []deviceT{{Name: "device1", Type: "sensor"}, {Name: "device2", Type: "light"}},
+	devicesList, err := h.store.GetDevices(ctx, user.ID)
+	if err != nil {
+		log.Println("ERROR:", err.Error())
+		http.Error(w, "Error getting devices", http.StatusInternalServerError)
+		return
 	}
-	err := h.views.RenderPage(w, r, "devices", devices)
+
+	devices := struct {
+		Devices []*model.Device
+	}{
+		Devices: devicesList,
+	}
+
+	err = h.views.RenderPage(w, r, "devices", devices)
 	if err != nil {
 		log.Println("error getting rendering page", err.Error())
-		return
+		http.Redirect(w, r, "/", http.StatusAccepted)
 	}
 }
 
@@ -117,7 +128,7 @@ func (h *Handler) registerUser(w http.ResponseWriter, r *http.Request) {
 
 	username := r.FormValue("username")
 	password := r.FormValue("password")
-	user, err := h.store.RegisterUser(ctx, username, password)
+	err := h.store.RegisterUser(ctx, username, password)
 
 	if err == store.ErrUsernameTaken {
 		http.Error(w, "username taken", http.StatusConflict)
@@ -129,8 +140,7 @@ func (h *Handler) registerUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "error registering user", http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	http.Redirect(w, r, "/", http.StatusAccepted)
 }
 
 func (h *Handler) logInUser(w http.ResponseWriter, r *http.Request) {
@@ -154,13 +164,19 @@ func (h *Handler) logInUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	auth.SetCookie(w, sesh.Token)
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	http.Redirect(w, r, "/", http.StatusAccepted)
 }
 
 func (h *Handler) logOutUser(w http.ResponseWriter, r *http.Request) {
-	auth.ClearCookie(w)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
+	defer cancel()
+
+	userId, err := getUserFromRequest(r)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	h.store.ClearUserSession(ctx, userId.ID)
 	http.Redirect(w, r, "/", http.StatusAccepted)
 }
 

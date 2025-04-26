@@ -49,7 +49,7 @@ func (s *PostgresStore) ReauthDevice(ctx context.Context, userId int, deviceId i
 
 }
 
-func (s *PostgresStore) GetDevices(ctx context.Context, userId int) ([]model.Device, error) {
+func (s *PostgresStore) GetDevices(ctx context.Context, userId int) ([]*model.Device, error) {
 	sql := `
 		SELECT id, user_id, location, created_at, api_key 
 		FROM devices
@@ -61,13 +61,13 @@ func (s *PostgresStore) GetDevices(ctx context.Context, userId int) ([]model.Dev
 	}
 	defer rows.Close()
 
-	devices := make([]model.Device, 0)
+	devices := make([]*model.Device, 0)
 	for rows.Next() {
 		var d model.Device
 		if err := rows.Scan(&d.ID, &d.UserId, &d.Location, &d.CreatedAt, &d.ApiKey); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
-		devices = append(devices, d)
+		devices = append(devices, &d)
 	}
 	if err = rows.Err(); err != nil {
 		return nil, fmt.Errorf("rows iteration error: %w", err)
