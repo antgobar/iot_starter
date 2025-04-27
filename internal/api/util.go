@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func getUserFromRequest(r *http.Request) (*model.User, error) {
+func GetUserFromRequest(r *http.Request) (*model.User, error) {
 	val := r.Context().Value(config.UserKey)
 	user, ok := val.(*model.User)
 	if !ok || user == nil {

@@ -14,11 +14,13 @@ func (s *PostgresStore) RegisterDevice(ctx context.Context, userId int, location
         VALUES ($1, $2, $3)
         RETURNING id, user_id, location, created_at, api_key
     `
+	apiKey := model.ApiKey(auth.GenerateUUID())
+	userIdTyped := model.UserId(userId)
 
 	device := model.Device{
-		UserId:   userId,
+		UserId:   userIdTyped,
 		Location: location,
-		ApiKey:   auth.GenerateUUID(),
+		ApiKey:   apiKey,
 	}
 
 	row := s.db.QueryRow(ctx, sql, device.UserId, device.Location, device.ApiKey)
@@ -35,10 +37,13 @@ func (s *PostgresStore) ReauthDevice(ctx context.Context, userId int, deviceId i
 		WHERE id = $2 AND user_id = $3
 		RETURNING id, user_id, location, created_at, api_key
 	`
+	deviceIdTyped := model.DeviceId(deviceId)
+	userIdTyped := model.UserId(userId)
+	apiKey := model.ApiKey(auth.GenerateUUID())
 	device := model.Device{
-		ID:     deviceId,
-		UserId: userId,
-		ApiKey: auth.GenerateUUID(),
+		ID:     deviceIdTyped,
+		UserId: userIdTyped,
+		ApiKey: apiKey,
 	}
 
 	row := s.db.QueryRow(ctx, sql, device.ApiKey, device.ID, device.UserId)

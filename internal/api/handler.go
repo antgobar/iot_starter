@@ -89,14 +89,14 @@ func (h *Handler) getDevicesPage(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	user, err := getUserFromRequest(r)
+	user, err := GetUserFromRequest(r)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
 		return
 	}
 
-	devicesList, err := h.store.GetDevices(ctx, user.ID)
+	devicesList, err := h.store.GetDevices(ctx, int(user.ID))
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error getting devices", http.StatusInternalServerError)
@@ -156,7 +156,7 @@ func (h *Handler) logInUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sesh, err := h.store.CreateUserSession(ctx, user.ID)
+	sesh, err := h.store.CreateUserSession(ctx, int(user.ID))
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "error logging in", http.StatusInternalServerError)
@@ -171,12 +171,12 @@ func (h *Handler) logOutUser(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	userId, err := getUserFromRequest(r)
+	userId, err := GetUserFromRequest(r)
 	if err != nil {
 		log.Println(err.Error())
 	}
 
-	h.store.ClearUserSession(ctx, userId.ID)
+	h.store.ClearUserSession(ctx, int(userId.ID))
 	http.Redirect(w, r, "/", http.StatusAccepted)
 }
 
@@ -205,7 +205,7 @@ func (h *Handler) registerDevice(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	user, err := getUserFromRequest(r)
+	user, err := GetUserFromRequest(r)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
@@ -218,7 +218,7 @@ func (h *Handler) registerDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	device, err := h.store.RegisterDevice(ctx, user.ID, location)
+	device, err := h.store.RegisterDevice(ctx, int(user.ID), location)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error registering device", http.StatusInternalServerError)
@@ -251,14 +251,14 @@ func (h *Handler) getDevices(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	user, err := getUserFromRequest(r)
+	user, err := GetUserFromRequest(r)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
 		return
 	}
 
-	devices, err := h.store.GetDevices(ctx, user.ID)
+	devices, err := h.store.GetDevices(ctx, int(user.ID))
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error retrieving devices", http.StatusInternalServerError)

@@ -20,8 +20,10 @@ func (s *PostgresStore) CreateUserSession(ctx context.Context, userId int) (*mod
 		RETURNING id, user_id, token, created_at, expires_at
 	`
 
+	userIdTyped := model.UserId(userId)
+
 	sesh := model.Session{
-		UserId:    userId,
+		UserId:    userIdTyped,
 		Token:     auth.GenerateUUID(),
 		ExpiresAt: time.Now().UTC().Add(3 * time.Hour),
 	}
