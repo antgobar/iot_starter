@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"iotstarter/internal/model"
+	"iotstarter/internal/typing"
 	"log"
 	"time"
 
@@ -47,7 +48,7 @@ func (b *NatsBrokerClient) Close() {
 	b.nc.Close()
 }
 
-func (b *NatsBrokerClient) Subscribe(ctx context.Context, subject string, handler MeasurementHandler) error {
+func (b *NatsBrokerClient) Subscribe(ctx context.Context, subject string, handler typing.MeasurementHandler) error {
 	processMessage := func(msg *nats.Msg) {
 		var measurement model.Measurement
 		if err := json.Unmarshal(msg.Data, &measurement); err != nil {

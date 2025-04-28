@@ -3,13 +3,14 @@ package broker
 import (
 	"context"
 	"iotstarter/internal/model"
+	"iotstarter/internal/typing"
 	"sync"
 )
 
 type memoryBroker struct {
 	publishCh   chan *publishRequest
 	subscribeCh chan *subscribeRequest
-	handlers    map[string][]MeasurementHandler
+	handlers    map[string][]typing.MeasurementHandler
 	mu          sync.Mutex
 }
 
@@ -21,7 +22,7 @@ type publishRequest struct {
 
 type subscribeRequest struct {
 	subject string
-	handler MeasurementHandler
+	handler typing.MeasurementHandler
 	ack     chan error
 }
 
@@ -29,7 +30,7 @@ func NewMemoryBroker() Broker {
 	b := &memoryBroker{
 		publishCh:   make(chan *publishRequest),
 		subscribeCh: make(chan *subscribeRequest),
-		handlers:    make(map[string][]MeasurementHandler),
+		handlers:    make(map[string][]typing.MeasurementHandler),
 	}
 	go b.run()
 	return b
@@ -57,7 +58,7 @@ func (b *memoryBroker) run() {
 	}
 }
 
-func (b *memoryBroker) Subscribe(ctx context.Context, subject string, handler MeasurementHandler) error {
+func (b *memoryBroker) Subscribe(ctx context.Context, subject string, handler typing.MeasurementHandler) error {
 	ack := make(chan error)
 	b.subscribeCh <- &subscribeRequest{subject: subject, handler: handler, ack: ack}
 	return <-ack
