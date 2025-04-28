@@ -23,8 +23,6 @@ func NewHandler(svc *Service) *Handler {
 	return &Handler{svc, nil}
 }
 
-
-
 func (h *Handler) Run() {
 	h.registerConsumers()
 	for _, consumer := range h.consumers {

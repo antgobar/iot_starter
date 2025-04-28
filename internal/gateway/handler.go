@@ -20,7 +20,7 @@ func NewHandler(svc *Service, d *device.Service, subject string) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /api/devices", h.saveMeasurement)
+	mux.HandleFunc("POST /api/measurements", h.saveMeasurement)
 }
 
 func (h *Handler) saveMeasurement(w http.ResponseWriter, r *http.Request) {

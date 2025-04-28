@@ -24,7 +24,7 @@ func main() {
 
 	for {
 		measurement := model.Measurement{
-			DeviceId:  1,
+			DeviceId:  10,
 			Name:      "temperature",
 			Value:     rand.Float64() * 10,
 			Unit:      "C",
@@ -49,7 +49,7 @@ func sendMeasurement(url string, measurement model.Measurement) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-api-key", "superSecret")
+	req.Header.Set("x-api-key", "08c002b8-2a9a-4824-8161-6feabfe9e7b3")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
