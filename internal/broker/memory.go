@@ -1,6 +1,7 @@
 package broker
 
 import (
+	"context"
 	"iotstarter/internal/model"
 	"sync"
 )
@@ -56,13 +57,13 @@ func (b *memoryBroker) run() {
 	}
 }
 
-func (b *memoryBroker) Subscribe(subject string, handler MeasurementHandler) error {
+func (b *memoryBroker) Subscribe(ctx context.Context, subject string, handler MeasurementHandler) error {
 	ack := make(chan error)
 	b.subscribeCh <- &subscribeRequest{subject: subject, handler: handler, ack: ack}
 	return <-ack
 }
 
-func (b *memoryBroker) Publish(subject string, msg *model.Measurement) error {
+func (b *memoryBroker) Publish(ctx context.Context, subject string, msg *model.Measurement) error {
 	ack := make(chan error)
 	b.publishCh <- &publishRequest{subject: subject, msg: msg, ack: ack}
 	return <-ack

@@ -94,7 +94,7 @@ func (h *Handler) getById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	deviceIdModel := model.DeviceId(deviceId)
-	device, err := h.svc.GetById(ctx, user.ID, deviceIdModel)
+	device, err := h.svc.GetUserDeviceById(ctx, user.ID, deviceIdModel)
 	if err == store.ErrDeviceNotFound {
 		http.Error(w, "Device not found", http.StatusNotFound)
 		return

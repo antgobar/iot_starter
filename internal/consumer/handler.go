@@ -1,6 +1,7 @@
 package consumer
 
 import (
+	"context"
 	"iotstarter/internal/broker"
 	"iotstarter/internal/store"
 	"log"
@@ -27,7 +28,7 @@ func (h *Handler) consumersSubjects() []string {
 func (h *Handler) Run() {
 	h.registerConsumers()
 	for _, consumer := range h.consumers {
-		err := h.broker.Subscribe(consumer.subject, consumer.handler)
+		err := h.broker.Subscribe(context.TODO(), consumer.subject, consumer.handler)
 		if err != nil {
 			log.Fatalln(err.Error())
 		}

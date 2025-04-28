@@ -1,4 +1,4 @@
-package view
+package presentation
 
 import (
 	"errors"
@@ -19,20 +19,20 @@ var htmlPages []string = []string{
 
 type CompliedTemplates map[string]*template.Template
 
-type Views struct {
+type Templates struct {
 	templates *CompliedTemplates
 }
 
-func NewHtmlView() *Views {
+func NewHtmlPresentation() *Templates {
 	templates, err := compileTemplates(htmlPages)
 	if err != nil {
 		log.Fatalln("Failed to compile templates:", err.Error())
 	}
-	return &Views{templates}
+	return &Templates{templates}
 }
 
-func (v *Views) Render(w http.ResponseWriter, r *http.Request, name string, data any) error {
-	tmpl, exists := (*v.templates)[name]
+func (t *Templates) Present(w http.ResponseWriter, r *http.Request, name string, data any) error {
+	tmpl, exists := (*t.templates)[name]
 	if !exists {
 		return errors.New(name + " template not found")
 	}

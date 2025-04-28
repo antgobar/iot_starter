@@ -77,7 +77,7 @@ func (s *PostgresRepo) List(ctx context.Context, userId model.UserId) ([]*model.
 	return devices, nil
 }
 
-func (s *PostgresRepo) GetById(ctx context.Context, userId model.UserId, deviceId model.DeviceId) (*model.Device, error) {
+func (s *PostgresRepo) GetUserDeviceById(ctx context.Context, userId model.UserId, deviceId model.DeviceId) (*model.Device, error) {
 	sql := `
 		SELECT id, location, created_at, api_key
 		FROM devices 
@@ -86,6 +86,24 @@ func (s *PostgresRepo) GetById(ctx context.Context, userId model.UserId, deviceI
 	device := model.Device{}
 
 	row := s.db.QueryRow(ctx, sql, deviceId, userId)
+	if err := row.Scan(&device.ID, &device.Location, &device.CreatedAt, &device.ApiKey); err != nil {
+		if isNoRowsFoundError(err) {
+			return nil, ErrDeviceNotFound
+		}
+		return nil, fmt.Errorf("failed to retrieve device id %v: %w", deviceId, err)
+	}
+	return &device, nil
+}
+
+func (s *PostgresRepo) GetById(ctx context.Context, deviceId model.DeviceId) (*model.Device, error) {
+	sql := `
+		SELECT id, location, created_at, api_key
+		FROM devices 
+		WHERE id = $1
+		`
+	device := model.Device{}
+
+	row := s.db.QueryRow(ctx, sql, deviceId)
 	if err := row.Scan(&device.ID, &device.Location, &device.CreatedAt, &device.ApiKey); err != nil {
 		if isNoRowsFoundError(err) {
 			return nil, ErrDeviceNotFound

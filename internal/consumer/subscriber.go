@@ -1,4 +1,4 @@
-package broker
+package consumer
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 
 type MeasurementHandler func(msg *model.Measurement)
 
-type Broker interface {
-	Publish(ctx context.Context, subject string, msg *model.Measurement) error
+type Subscriber interface {
 	Subscribe(ctx context.Context, subject string, handler MeasurementHandler) error
 }

@@ -8,11 +8,10 @@ import (
 	"iotstarter/internal/database"
 	"iotstarter/internal/device"
 	"iotstarter/internal/middleware"
-	"iotstarter/internal/page"
+	"iotstarter/internal/presentation"
 	"iotstarter/internal/session"
-	"iotstarter/internal/store"
 	"iotstarter/internal/user"
-	"iotstarter/internal/view"
+	"iotstarter/internal/web"
 	"time"
 )
 
@@ -23,9 +22,6 @@ func main() {
 	defer cancel()
 
 	db := database.NewPostgresPool(ctx, dbUrl)
-
-	store := store.NewPostgresStore(ctx, dbUrl)
-	defer store.Close()
 
 	userRepo := user.NewPostgresRepository(ctx, db.Pool)
 	sessionRepo := session.NewPostgresRepository(ctx, db.Pool)
@@ -40,8 +36,8 @@ func main() {
 	authHandler := auth.NewHandler(authService)
 	deviceHandler := device.NewHandler(deviceService)
 
-	htmlView := view.NewHtmlView()
-	pageHandler := page.NewHandler(htmlView)
+	htmlPresentation := presentation.NewHtmlPresentation()
+	webPageHandler := web.NewHandler(htmlPresentation)
 
 	middlewareStack := middleware.LoadMiddleware(sessionService)
 	server := api.NewServer(
@@ -50,7 +46,7 @@ func main() {
 		authHandler,
 		userHandler,
 		deviceHandler,
-		pageHandler,
+		webPageHandler,
 	)
 	server.Run("Dashboard")
 }

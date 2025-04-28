@@ -5,7 +5,8 @@ import (
 	"iotstarter/internal/broker"
 	"iotstarter/internal/config"
 	"iotstarter/internal/consumer"
-	"iotstarter/internal/store"
+	"iotstarter/internal/database"
+	"iotstarter/internal/measurement"
 	"time"
 )
 
@@ -16,11 +17,13 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*5))
 	defer cancel()
 
-	store := store.NewPostgresStore(ctx, dbUrl)
-	defer store.Close()
-
 	brokerClient := broker.NewNatsBrokerClient(brokerUrl)
 	defer brokerClient.Close()
+
+	db := database.NewPostgresPool(ctx, dbUrl)
+
+	measurementRepo := measurement.NewPostgresRepository(ctx, db.Pool)
+	consumerService := consumer.NewService(brokerClient, measurementRepo, config.BrokerMeasurementSubject)
 
 	handler := consumer.NewHandler(store, brokerClient)
 	handler.Run()

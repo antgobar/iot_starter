@@ -41,8 +41,8 @@ func (s *Service) List(ctx context.Context, u model.UserId) ([]*model.Device, er
 	return s.repo.List(ctx, u)
 }
 
-func (s *Service) GetById(ctx context.Context, u model.UserId, d model.DeviceId) (*model.Device, error) {
-	return s.repo.GetById(ctx, u, d)
+func (s *Service) GetUserDeviceById(ctx context.Context, u model.UserId, d model.DeviceId) (*model.Device, error) {
+	return s.repo.GetUserDeviceById(ctx, u, d)
 }
 
 func (s *Service) GetMeasurements(ctx context.Context, u model.UserId, d model.DeviceId, start, end time.Time) ([]*model.Measurement, error) {

@@ -4,6 +4,8 @@ import (
 	"iotstarter/internal/api"
 	"iotstarter/internal/broker"
 	"iotstarter/internal/config"
+	"iotstarter/internal/gateway"
+	"iotstarter/internal/middleware"
 )
 
 func main() {
@@ -13,7 +15,14 @@ func main() {
 	brokerClient := broker.NewNatsBrokerClient(brokerUrl)
 	defer brokerClient.Close()
 
-	handler := api.NewHandler().WithBroker(brokerClient)
-	server := api.NewServer(gatewayAddr, handler)
+	gatewayService := gateway.NewService(brokerClient)
+	gatewayHandler := gateway.NewHandler(gatewayService, config.BrokerMeasurementSubject)
+
+	middlewareStack := middleware.LoadMiddleware(nil)
+	server := api.NewServer(
+		gatewayAddr,
+		middlewareStack,
+		gatewayHandler,
+	)
 	server.Run("Gateway")
 }
