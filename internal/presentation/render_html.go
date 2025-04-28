@@ -37,15 +37,14 @@ func (t *Templates) Present(w http.ResponseWriter, r *http.Request, name string,
 		return errors.New(name + " template not found")
 	}
 
-	var tmplName string
+	tmplName := "base"
 
 	if r.Header.Get("HX-Request") == "true" {
 		tmplName = "content"
-	} else {
-		tmplName = "base"
 	}
 
-	return tmpl.ExecuteTemplate(w, tmplName, data)
+	payload := struct{ Data any }{Data: data}
+	return tmpl.ExecuteTemplate(w, tmplName, payload)
 }
 
 func compileTemplates(pages []string) (*CompliedTemplates, error) {

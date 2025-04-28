@@ -3,7 +3,6 @@ package consumer
 import (
 	"context"
 	"iotstarter/internal/broker"
-	"iotstarter/internal/store"
 	"log"
 )
 

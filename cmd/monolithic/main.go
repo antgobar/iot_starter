@@ -6,8 +6,6 @@ import (
 	"iotstarter/internal/broker"
 	"iotstarter/internal/config"
 	"iotstarter/internal/consumer"
-	"iotstarter/internal/store"
-	"iotstarter/internal/views"
 	"time"
 )
 

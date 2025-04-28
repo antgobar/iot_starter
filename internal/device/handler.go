@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"iotstarter/internal/auth"
 	"iotstarter/internal/model"
-	"iotstarter/internal/store"
 	"log"
 	"net/http"
 	"strconv"
@@ -94,14 +93,9 @@ func (h *Handler) getById(w http.ResponseWriter, r *http.Request) {
 
 	deviceIdModel := model.DeviceId(deviceId)
 	device, err := h.svc.GetUserDeviceById(ctx, user.ID, deviceIdModel)
-	if err == store.ErrDeviceNotFound {
-		http.Error(w, "Device not found", http.StatusNotFound)
-		return
-	}
-
 	if err != nil {
 		log.Println("ERROR:", err.Error())
-		http.Error(w, "Error retrieving devices", http.StatusInternalServerError)
+		http.Error(w, "Device not found", http.StatusNotFound)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
