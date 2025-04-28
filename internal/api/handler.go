@@ -7,8 +7,9 @@ import (
 	"iotstarter/internal/broker"
 	"iotstarter/internal/config"
 	"iotstarter/internal/model"
+	"iotstarter/internal/session"
 	"iotstarter/internal/store"
-	"iotstarter/internal/views"
+	"iotstarter/internal/view"
 	"log"
 	"net/http"
 	"strconv"
@@ -18,7 +19,7 @@ import (
 type Handler struct {
 	store  store.Store
 	broker broker.Broker
-	views  *views.Views
+	views  *view.Views
 }
 
 func NewHandler() *Handler {
@@ -35,7 +36,7 @@ func (h *Handler) WithBroker(broker broker.Broker) *Handler {
 	return h
 }
 
-func (h *Handler) WithViewsAndStore(views *views.Views, store store.Store) *Handler {
+func (h *Handler) WithViewsAndStore(views *view.Views, store store.Store) *Handler {
 	h.views = views
 	return h.WithStore(store)
 }
@@ -78,7 +79,7 @@ func (h *Handler) getHomePage(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	err := h.views.RenderPage(w, r, "home", nil)
+	err := h.views.Render(w, r, "home", nil)
 	if err != nil {
 		log.Println("error getting home view", err.Error())
 		return
@@ -89,7 +90,7 @@ func (h *Handler) getDevicesPage(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	user, err := GetUserFromRequest(r)
+	user, err := auth.UserFromContext(r.Context())
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
@@ -109,7 +110,7 @@ func (h *Handler) getDevicesPage(w http.ResponseWriter, r *http.Request) {
 		Devices: devicesList,
 	}
 
-	err = h.views.RenderPage(w, r, "devices", devices)
+	err = h.views.Render(w, r, "devices", devices)
 	if err != nil {
 		log.Println("error getting rendering page", err.Error())
 		http.Redirect(w, r, "/", http.StatusAccepted)
@@ -163,7 +164,7 @@ func (h *Handler) logInUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	auth.SetCookie(w, sesh.Token)
+	session.SetCookie(w, string(sesh.Token))
 	http.Redirect(w, r, "/", http.StatusAccepted)
 }
 
@@ -171,7 +172,7 @@ func (h *Handler) logOutUser(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	userId, err := GetUserFromRequest(r)
+	userId, err := auth.UserFromContext(r.Context())
 	if err != nil {
 		log.Println(err.Error())
 	}
@@ -205,7 +206,7 @@ func (h *Handler) registerDevice(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	user, err := GetUserFromRequest(r)
+	user, err := auth.UserFromContext(r.Context())
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
@@ -251,7 +252,7 @@ func (h *Handler) getDevices(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	user, err := GetUserFromRequest(r)
+	user, err := auth.UserFromContext(r.Context())
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error getting user", http.StatusUnauthorized)

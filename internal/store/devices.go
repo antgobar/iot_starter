@@ -3,8 +3,8 @@ package store
 import (
 	"context"
 	"fmt"
-	"iotstarter/internal/auth"
 	"iotstarter/internal/model"
+	"iotstarter/internal/security"
 	"log"
 )
 
@@ -14,7 +14,7 @@ func (s *PostgresStore) RegisterDevice(ctx context.Context, userId int, location
         VALUES ($1, $2, $3)
         RETURNING id, user_id, location, created_at, api_key
     `
-	apiKey := model.ApiKey(auth.GenerateUUID())
+	apiKey := model.ApiKey(security.GenerateUUID())
 	userIdTyped := model.UserId(userId)
 
 	device := model.Device{
@@ -39,7 +39,7 @@ func (s *PostgresStore) ReauthDevice(ctx context.Context, userId int, deviceId i
 	`
 	deviceIdTyped := model.DeviceId(deviceId)
 	userIdTyped := model.UserId(userId)
-	apiKey := model.ApiKey(auth.GenerateUUID())
+	apiKey := model.ApiKey(security.GenerateUUID())
 	device := model.Device{
 		ID:     deviceIdTyped,
 		UserId: userIdTyped,

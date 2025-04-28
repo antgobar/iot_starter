@@ -1,4 +1,4 @@
-package store
+package user
 
 import (
 	"context"
@@ -7,9 +7,22 @@ import (
 	"iotstarter/internal/model"
 	"iotstarter/internal/security"
 	"log"
+
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func (s *PostgresStore) RegisterUser(ctx context.Context, userName string, password string) error {
+type PostgresRepo struct {
+	db *pgxpool.Pool
+}
+
+func NewPostgresRepository(ctx context.Context, db *pgxpool.Pool) *PostgresRepo {
+	return &PostgresRepo{db: db}
+}
+
+func (s *PostgresRepo) Create(ctx context.Context, userName string, password string) (*model.User, error) {
 	sql := `
 		INSERT INTO users (username, hashed_password)
 		VALUES ($1, $2)
@@ -19,7 +32,7 @@ func (s *PostgresStore) RegisterUser(ctx context.Context, userName string, passw
 	hashedPassword, err := security.HashPassword(password)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
-		return security.ErrHashingError
+		return nil, security.ErrHashingError
 	}
 
 	user := model.User{
@@ -31,16 +44,16 @@ func (s *PostgresStore) RegisterUser(ctx context.Context, userName string, passw
 	err = row.Scan(&user.ID, &user.Username, &user.CreatedAt, &user.Active)
 
 	if isUniqueViolationError(err) {
-		return ErrUsernameTaken
+		return nil, ErrUsernameTaken
 	}
 	if err != nil {
-		return fmt.Errorf("failed to register user %v: %w", user, err)
+		return nil, fmt.Errorf("failed to register user %v: %w", user, err)
 	}
 
-	return nil
+	return &user, nil
 }
 
-func (s *PostgresStore) GetUserFromCreds(ctx context.Context, userName string, password string) (*model.User, error) {
+func (s *PostgresRepo) GetFromCreds(ctx context.Context, userName string, password string) (*model.User, error) {
 	sql := `
 		SELECT id, username, hashed_password, created_at, active
 		FROM users 
@@ -64,4 +77,20 @@ func (s *PostgresStore) GetUserFromCreds(ctx context.Context, userName string, p
 	}
 
 	return &user, nil
+}
+
+var ErrUsernameTaken = errors.New("username taken")
+var ErrUserNotExists = errors.New("user does not exist")
+
+func isUniqueViolationError(err error) bool {
+	var pgErr *pgconn.PgError
+
+	if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+		return true
+	}
+	return false
+}
+
+func isNoRowsFoundError(err error) bool {
+	return errors.Is(err, pgx.ErrNoRows)
 }

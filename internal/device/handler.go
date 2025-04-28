@@ -3,7 +3,7 @@ package device
 import (
 	"context"
 	"encoding/json"
-	"iotstarter/internal/api"
+	"iotstarter/internal/auth"
 	"iotstarter/internal/model"
 	"iotstarter/internal/store"
 	"log"
@@ -32,7 +32,7 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	user, err := api.GetUserFromRequest(r)
+	user, err := auth.UserFromContext(r.Context())
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
@@ -59,7 +59,7 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	user, err := api.GetUserFromRequest(r)
+	user, err := auth.UserFromContext(r.Context())
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
@@ -80,7 +80,7 @@ func (h *Handler) getById(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	user, err := api.GetUserFromRequest(r)
+	user, err := auth.UserFromContext(r.Context())
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
@@ -120,7 +120,7 @@ func (h *Handler) getMeasurements(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := api.GetUserFromRequest(r)
+	user, err := auth.UserFromContext(r.Context())
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
@@ -143,7 +143,7 @@ func (h *Handler) reauth(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	user, err := api.GetUserFromRequest(r)
+	user, err := auth.UserFromContext(r.Context())
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error getting user", http.StatusUnauthorized)

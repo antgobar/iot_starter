@@ -3,8 +3,9 @@ package middleware
 import (
 	"context"
 	"iotstarter/internal/auth"
-	"iotstarter/internal/config"
-	"iotstarter/internal/store"
+	"iotstarter/internal/model"
+	"iotstarter/internal/security"
+	"iotstarter/internal/session"
 	"log"
 	"net/http"
 	"strings"
@@ -13,7 +14,7 @@ import (
 
 type Middleware func(http.Handler) http.Handler
 
-func LoadMiddleware(s store.SessionStore) Middleware {
+func LoadMiddleware(s *session.Service) Middleware {
 	h := newHandler(s)
 	return createMiddlewareStack(
 		loggingMiddleware,
@@ -22,11 +23,11 @@ func LoadMiddleware(s store.SessionStore) Middleware {
 }
 
 type Handler struct {
-	store store.SessionStore
+	s *session.Service
 }
 
-func newHandler(store store.SessionStore) Handler {
-	return Handler{store: store}
+func newHandler(s *session.Service) Handler {
+	return Handler{s: s}
 }
 
 func createMiddlewareStack(xs ...Middleware) Middleware {
@@ -51,8 +52,9 @@ func isPublicPath(path string) bool {
 		return true
 	}
 	publicPrefixes := []string{
-		"/login",
 		"/register",
+		"/login",
+		"/logout",
 		"/static",
 		"/favicon.ico",
 		"/api/auth/login",
@@ -68,7 +70,7 @@ func isPublicPath(path string) bool {
 
 func isSavingMeasurement(r *http.Request) bool {
 	if r.URL.Path == "/api/measurements" && r.Method == "POST" {
-		return auth.IsAuthedToken(r.Header.Get("x-api-key"))
+		return security.IsAuthedToken(r.Header.Get("x-api-key"))
 	}
 	return false
 }
@@ -85,7 +87,7 @@ func (h *Handler) authMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		cookieVal, err := auth.GetCookieValue(r)
+		cookieVal, err := session.GetCookieValue(r)
 		if err != nil {
 			http.Error(w, "No session value", http.StatusUnauthorized)
 			return
@@ -94,18 +96,19 @@ func (h *Handler) authMiddleware(next http.Handler) http.Handler {
 		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 		defer cancel()
 
-		user, err := h.store.GetUserFromToken(ctx, cookieVal)
+		token := model.SessionToken(cookieVal)
+
+		user, err := h.s.GetUserFromToken(ctx, token)
 		if err != nil {
 			log.Println(err.Error())
 			http.Error(w, "Unauthenticated", http.StatusUnauthorized)
 			return
 		}
 
-		ctx = context.WithValue(r.Context(), config.UserKey, user)
-		r = r.WithContext(ctx)
+		log.Println("User in session", user)
 
-		log.Println("User set in request context", user)
+		ctx = auth.WithUser(r.Context(), user)
 
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

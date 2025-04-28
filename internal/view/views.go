@@ -1,4 +1,4 @@
-package views
+package view
 
 import (
 	"errors"
@@ -11,7 +11,10 @@ import (
 const baseTemplateDir = "templates"
 
 var htmlPages []string = []string{
-	"home", "devices",
+	"home",
+	"devices",
+	"login",
+	"register",
 }
 
 type CompliedTemplates map[string]*template.Template
@@ -20,7 +23,7 @@ type Views struct {
 	templates *CompliedTemplates
 }
 
-func NewViews() *Views {
+func NewView() *Views {
 	templates, err := compileTemplates(htmlPages)
 	if err != nil {
 		log.Fatalln("Failed to compile templates:", err.Error())
@@ -28,7 +31,7 @@ func NewViews() *Views {
 	return &Views{templates}
 }
 
-func (v *Views) RenderPage(w http.ResponseWriter, r *http.Request, name string, data any) error {
+func (v *Views) Render(w http.ResponseWriter, r *http.Request, name string, data any) error {
 	tmpl, exists := (*v.templates)[name]
 	if !exists {
 		return errors.New(name + " template not found")

@@ -1,4 +1,4 @@
-package store
+package session
 
 import (
 	"context"
@@ -6,12 +6,22 @@ import (
 	"iotstarter/internal/model"
 	"iotstarter/internal/security"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func (s *PostgresStore) CreateUserSession(ctx context.Context, userId int) (*model.Session, error) {
-	err := s.ClearUserSession(ctx, userId)
+type PostgresRepo struct {
+	db *pgxpool.Pool
+}
+
+func NewPostgresRepository(ctx context.Context, db *pgxpool.Pool) *PostgresRepo {
+	return &PostgresRepo{db: db}
+}
+
+func (s *PostgresRepo) Create(ctx context.Context, userId model.UserId) (*model.Session, error) {
+	err := s.Clear(ctx, userId)
 	if err != nil {
-		return nil, ErrDeviceNotFound
+		return nil, fmt.Errorf("failed to clear sessions for user %d: %w", userId, err)
 	}
 
 	sql := `
@@ -20,10 +30,9 @@ func (s *PostgresStore) CreateUserSession(ctx context.Context, userId int) (*mod
 		RETURNING id, user_id, token, created_at, expires_at
 	`
 
-	userIdTyped := model.UserId(userId)
 	seshToken := model.SessionToken(security.GenerateUUID())
 	sesh := model.Session{
-		UserId:    userIdTyped,
+		UserId:    userId,
 		Token:     seshToken,
 		ExpiresAt: time.Now().UTC().Add(3 * time.Hour),
 	}
@@ -36,7 +45,22 @@ func (s *PostgresStore) CreateUserSession(ctx context.Context, userId int) (*mod
 	return &sesh, nil
 }
 
-func (s *PostgresStore) GetUserFromToken(ctx context.Context, token string) (*model.User, error) {
+func (s *PostgresRepo) Get(ctx context.Context, token model.SessionToken) (*model.Session, error) {
+	sql := `
+		SELECT * 
+		FROM sessions
+		WHERE token = $1
+	`
+
+	session := model.Session{}
+	row := s.db.QueryRow(ctx, sql, token)
+	if err := row.Scan(&session.ID, &session.UserId, &session.Token, &session.CreatedAt, &session.ExpiresAt); err != nil {
+		return nil, fmt.Errorf("failed to retrieve session %v: %w", session, err)
+	}
+	return &session, nil
+}
+
+func (s *PostgresRepo) GetUserFromToken(ctx context.Context, token model.SessionToken) (*model.User, error) {
 	sql := `
 		SELECT users.id, users.username, users.created_at, users.active
 		FROM users
@@ -53,7 +77,7 @@ func (s *PostgresStore) GetUserFromToken(ctx context.Context, token string) (*mo
 	return &user, nil
 }
 
-func (s *PostgresStore) ClearUserSession(ctx context.Context, userId int) error {
+func (s *PostgresRepo) Clear(ctx context.Context, userId model.UserId) error {
 	sql := `
 		DELETE FROM sessions
 		WHERE user_id = $1

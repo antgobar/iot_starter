@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"iotstarter/internal/model"
-	"log"
 	"time"
 
 	"github.com/jackc/pgx"
@@ -16,13 +15,8 @@ type PostgresRepo struct {
 	db *pgxpool.Pool
 }
 
-func NewPostgresRepository(ctx context.Context, url string) *PostgresRepo {
-	pool, err := pgxpool.New(ctx, url)
-	if err != nil {
-		log.Fatalln("Error connecting to PostgresDB", err.Error())
-	}
-	store := PostgresRepo{db: pool}
-	return &store
+func NewPostgresRepository(ctx context.Context, db *pgxpool.Pool) *PostgresRepo {
+	return &PostgresRepo{db: db}
 }
 
 func (s *PostgresRepo) Create(ctx context.Context, device *model.Device) (*model.Device, error) {
@@ -109,7 +103,7 @@ func isNoRowsFoundError(err error) bool {
 
 func (s *PostgresRepo) GetMeasurements(ctx context.Context, userId model.UserId, deviceId model.DeviceId, start, end time.Time) ([]*model.Measurement, error) {
 	sql := `
-		SELECT measurements.id, measurements.user_id, measurements.name, measurements.value, measurements.unit, measurements.timestamp 
+		SELECT measurements.id, measurements.device_id, measurements.name, measurements.value, measurements.unit, measurements.timestamp 
 		FROM measurements
 		INNER JOIN devices ON devices.id = measurements.device_id
 		WHERE measurements.device_id = $1

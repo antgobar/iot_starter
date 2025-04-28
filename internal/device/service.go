@@ -2,8 +2,8 @@ package device
 
 import (
 	"context"
-	"iotstarter/internal/auth"
 	"iotstarter/internal/model"
+	"iotstarter/internal/security"
 	"time"
 )
 
@@ -16,7 +16,7 @@ func NewService(r Repository) *Service {
 }
 
 func generateApiKey() model.ApiKey {
-	return model.ApiKey(auth.GenerateUUID())
+	return model.ApiKey(security.GenerateUUID())
 }
 
 func (s *Service) Register(ctx context.Context, userId model.UserId, location string) (*model.Device, error) {
