@@ -46,6 +46,8 @@ func (h *Handler) logOut(w http.ResponseWriter, r *http.Request) {
 	user, err := UserFromContext(r.Context())
 	if err != nil {
 		log.Println(err.Error())
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
 	}
 
 	err = h.svc.LogOut(ctx, user.ID)
