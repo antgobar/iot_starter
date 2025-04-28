@@ -30,7 +30,7 @@ func main() {
 	gatewayService := gateway.NewService(brokerClient)
 	gatewayHandler := gateway.NewHandler(gatewayService, devicesService, config.BrokerMeasurementSubject)
 
-	middlewareStack := middleware.LoadLoggingMiddleware()
+	middlewareStack := middleware.LoadMiddleware(nil)
 	server := api.NewServer(
 		gatewayAddr,
 		middlewareStack,

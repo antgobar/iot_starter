@@ -23,8 +23,9 @@ func main() {
 	db := database.NewPostgresPool(ctx, dbUrl)
 
 	measurementRepo := measurement.NewPostgresRepository(ctx, db.Pool)
-	consumerService := consumer.NewService(brokerClient, measurementRepo, config.BrokerMeasurementSubject)
+	svc := consumer.NewService(brokerClient, measurementRepo, config.BrokerMeasurementSubject)
 
-	handler := consumer.NewHandler(consumerService)
+	handler := consumer.NewHandler(svc)
 	handler.Run()
+	select {}
 }

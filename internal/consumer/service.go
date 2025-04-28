@@ -9,7 +9,6 @@ import (
 type Service struct {
 	sub          Subscriber
 	measurements measurement.Repository
-	subscriber   Subscriber
 	subject      string
 }
 

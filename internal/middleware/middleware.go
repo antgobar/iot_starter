@@ -17,17 +17,14 @@ type SessionHandler struct {
 	sessions *session.Service
 }
 
-func LoadSessionMiddleware(s *session.Service) Middleware {
+func LoadMiddleware(s *session.Service) Middleware {
+	if s == nil {
+		return loggingMiddleware
+	}
 	h := SessionHandler{sessions: s}
 	return createMiddlewareStack(
 		loggingMiddleware,
-		h.authSessionMiddleware,
-	)
-}
-
-func LoadLoggingMiddleware() Middleware {
-	return createMiddlewareStack(
-		loggingMiddleware,
+		h.authMiddleware,
 	)
 }
 
@@ -38,9 +35,18 @@ func loggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (h *SessionHandler) authSessionMiddleware(next http.Handler) http.Handler {
+func isGatewayRequest(r *http.Request) bool {
+	return strings.HasPrefix(r.URL.Path, "/api/measurements") && r.Method == "POST"
+}
+
+func (h *SessionHandler) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if isPublicPath(r.URL.Path) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		if isGatewayRequest(r) {
 			next.ServeHTTP(w, r)
 			return
 		}

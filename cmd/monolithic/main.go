@@ -57,7 +57,7 @@ func main() {
 	consumerHandler := consumer.NewHandler(consumerService)
 	consumerHandler.Run()
 
-	middlewareStack := middleware.LoadSessionMiddleware(sessionService)
+	middlewareStack := middleware.LoadMiddleware(sessionService)
 	server := api.NewServer(
 		apiAddr,
 		middlewareStack,
