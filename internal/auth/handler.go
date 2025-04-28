@@ -36,7 +36,7 @@ func (h *Handler) logIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session.SetCookie(w, string(sesh.Token))
-	http.Redirect(w, r, "/", http.StatusAccepted)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (h *Handler) logOut(w http.ResponseWriter, r *http.Request) {
@@ -52,5 +52,5 @@ func (h *Handler) logOut(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 	}
-	http.Redirect(w, r, "/", http.StatusAccepted)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

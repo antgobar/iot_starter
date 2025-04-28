@@ -113,7 +113,7 @@ func (h *Handler) getDevicesPage(w http.ResponseWriter, r *http.Request) {
 	err = h.views.Render(w, r, "devices", devices)
 	if err != nil {
 		log.Println("error getting rendering page", err.Error())
-		http.Redirect(w, r, "/", http.StatusAccepted)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 
@@ -141,7 +141,7 @@ func (h *Handler) registerUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "error registering user", http.StatusInternalServerError)
 		return
 	}
-	http.Redirect(w, r, "/", http.StatusAccepted)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (h *Handler) logInUser(w http.ResponseWriter, r *http.Request) {
@@ -165,7 +165,7 @@ func (h *Handler) logInUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session.SetCookie(w, string(sesh.Token))
-	http.Redirect(w, r, "/", http.StatusAccepted)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (h *Handler) logOutUser(w http.ResponseWriter, r *http.Request) {
@@ -178,7 +178,7 @@ func (h *Handler) logOutUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.store.ClearUserSession(ctx, int(userId.ID))
-	http.Redirect(w, r, "/", http.StatusAccepted)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (h *Handler) getDeviceMeasurements(w http.ResponseWriter, r *http.Request) {

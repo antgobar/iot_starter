@@ -40,8 +40,8 @@ func main() {
 	authHandler := auth.NewHandler(authService)
 	deviceHandler := device.NewHandler(deviceService)
 
-	view := view.NewView()
-	pageHandler := page.NewHandler(view)
+	htmlView := view.NewHtmlView()
+	pageHandler := page.NewHandler(htmlView)
 
 	middlewareStack := middleware.LoadMiddleware(sessionService)
 	server := api.NewServer(

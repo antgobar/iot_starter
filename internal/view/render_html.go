@@ -23,7 +23,7 @@ type Views struct {
 	templates *CompliedTemplates
 }
 
-func NewView() *Views {
+func NewHtmlView() *Views {
 	templates, err := compileTemplates(htmlPages)
 	if err != nil {
 		log.Fatalln("Failed to compile templates:", err.Error())
