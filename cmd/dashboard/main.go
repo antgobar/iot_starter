@@ -7,6 +7,7 @@ import (
 	"iotstarter/internal/config"
 	"iotstarter/internal/database"
 	"iotstarter/internal/device"
+	"iotstarter/internal/measurement"
 	"iotstarter/internal/middleware"
 	"iotstarter/internal/presentation"
 	"iotstarter/internal/session"
@@ -26,18 +27,20 @@ func main() {
 	userRepo := user.NewPostgresRepository(ctx, db.Pool)
 	sessionRepo := session.NewPostgresRepository(ctx, db.Pool)
 	deviceRepo := device.NewPostgresRepository(ctx, db.Pool)
+	measurementRepo := measurement.NewPostgresRepository(ctx, db.Pool)
 
+	htmlPresenter := presentation.NewHtmlPresenter()
 	userService := user.NewService(userRepo)
 	sessionService := session.NewService(sessionRepo)
 	authService := auth.NewService(userRepo, sessionRepo)
 	deviceService := device.NewService(deviceRepo)
+	measurementService := measurement.NewService(measurementRepo)
 
 	userHandler := user.NewHandler(userService)
 	authHandler := auth.NewHandler(authService)
 	deviceHandler := device.NewHandler(deviceService)
-
-	htmlPresentation := presentation.NewHtmlPresentation()
-	webPageHandler := web.NewHandler(htmlPresentation)
+	webPageHandler := web.NewHandler(htmlPresenter)
+	measurementHandler := measurement.NewHandler(measurementService)
 
 	middlewareStack := middleware.LoadMiddleware(sessionService)
 	server := api.NewServer(
@@ -47,6 +50,7 @@ func main() {
 		userHandler,
 		deviceHandler,
 		webPageHandler,
+		measurementHandler,
 	)
 	server.Run("Dashboard")
 }

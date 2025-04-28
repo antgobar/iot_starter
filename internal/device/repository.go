@@ -3,7 +3,6 @@ package device
 import (
 	"context"
 	"iotstarter/internal/model"
-	"time"
 )
 
 type Repository interface {
@@ -12,5 +11,4 @@ type Repository interface {
 	List(ctx context.Context, userId model.UserId) ([]*model.Device, error)
 	GetUserDeviceById(ctx context.Context, userId model.UserId, deviceId model.DeviceId) (*model.Device, error)
 	GetById(ctx context.Context, deviceId model.DeviceId) (*model.Device, error)
-	GetMeasurements(ctx context.Context, userId model.UserId, deviceId model.DeviceId, start, end time.Time) ([]*model.Measurement, error)
 }

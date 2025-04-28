@@ -24,7 +24,6 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/devices", h.register)
 	mux.HandleFunc("GET /api/devices", h.list)
 	mux.HandleFunc("GET /api/devices/{id}", h.getById)
-	mux.HandleFunc("GET /api/devices/{id}/measurements", h.getMeasurements)
 	mux.HandleFunc("PATCH /api/devices/{id}/reauth", h.reauth)
 }
 
@@ -107,36 +106,6 @@ func (h *Handler) getById(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(device)
-}
-
-func (h *Handler) getMeasurements(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
-	defer cancel()
-
-	params, err := getMeasurementsQueryParams(r)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "bad request", http.StatusBadRequest)
-		return
-	}
-
-	user, err := auth.UserFromContext(r.Context())
-	if err != nil {
-		log.Println("ERROR:", err.Error())
-		http.Error(w, "Error getting user", http.StatusUnauthorized)
-		return
-	}
-
-	deviceId := model.DeviceId(params.deviceId)
-
-	measurements, err := h.svc.GetMeasurements(ctx, user.ID, deviceId, params.start, params.end)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Error retrieving measurements", http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(measurements)
 }
 
 func (h *Handler) reauth(w http.ResponseWriter, r *http.Request) {

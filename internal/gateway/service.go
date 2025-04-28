@@ -2,9 +2,10 @@ package gateway
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"iotstarter/internal/device"
 	"iotstarter/internal/model"
+	"strconv"
 )
 
 type Service struct {
@@ -12,8 +13,8 @@ type Service struct {
 	devices device.Repository
 }
 
-func NewService(p Publisher) *Service {
-	return &Service{pub: p}
+func NewService(p Publisher, d device.Repository) *Service {
+	return &Service{pub: p, devices: d}
 }
 
 func (s *Service) Publish(ctx context.Context, subject string, measurement *model.Measurement) error {
@@ -25,8 +26,10 @@ func (s *Service) CheckDeviceIsAuthed(ctx context.Context, deviceId model.Device
 	if err != nil {
 		return device.ErrDeviceNotFound
 	}
+
+	deviceIDstr := strconv.Itoa(int(deviceId))
 	if measurementDevice.ApiKey != apiKey {
-		return errors.New("invalid API key for device id: " + string(deviceId))
+		return fmt.Errorf("invalid API key for device id: %s", deviceIDstr)
 	}
 	return nil
 }

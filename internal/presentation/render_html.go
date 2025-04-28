@@ -23,7 +23,7 @@ type Templates struct {
 	templates *CompliedTemplates
 }
 
-func NewHtmlPresentation() *Templates {
+func NewHtmlPresenter() *Templates {
 	templates, err := compileTemplates(htmlPages)
 	if err != nil {
 		log.Fatalln("Failed to compile templates:", err.Error())

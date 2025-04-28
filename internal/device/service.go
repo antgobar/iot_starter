@@ -4,7 +4,6 @@ import (
 	"context"
 	"iotstarter/internal/model"
 	"iotstarter/internal/security"
-	"time"
 )
 
 type Service struct {
@@ -43,8 +42,4 @@ func (s *Service) List(ctx context.Context, u model.UserId) ([]*model.Device, er
 
 func (s *Service) GetUserDeviceById(ctx context.Context, u model.UserId, d model.DeviceId) (*model.Device, error) {
 	return s.repo.GetUserDeviceById(ctx, u, d)
-}
-
-func (s *Service) GetMeasurements(ctx context.Context, u model.UserId, d model.DeviceId, start, end time.Time) ([]*model.Measurement, error) {
-	return s.repo.GetMeasurements(ctx, u, d, start, end)
 }
