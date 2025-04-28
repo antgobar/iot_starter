@@ -42,7 +42,7 @@ func main() {
 	webPageHandler := web.NewHandler(htmlPresenter)
 	measurementHandler := measurement.NewHandler(measurementService)
 
-	middlewareStack := middleware.LoadMiddleware(sessionService)
+	middlewareStack := middleware.LoadSessionMiddleware(sessionService)
 	server := api.NewServer(
 		apiAddr,
 		middlewareStack,

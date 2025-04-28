@@ -25,11 +25,12 @@ func main() {
 	defer brokerClient.Close()
 
 	devicesRepo := device.NewPostgresRepository(ctx, db.Pool)
+	devicesService := device.NewService(devicesRepo)
 
-	gatewayService := gateway.NewService(brokerClient, devicesRepo)
-	gatewayHandler := gateway.NewHandler(gatewayService, config.BrokerMeasurementSubject)
+	gatewayService := gateway.NewService(brokerClient)
+	gatewayHandler := gateway.NewHandler(gatewayService, devicesService, config.BrokerMeasurementSubject)
 
-	middlewareStack := middleware.LoadMiddleware(nil)
+	middlewareStack := middleware.LoadLoggingMiddleware()
 	server := api.NewServer(
 		gatewayAddr,
 		middlewareStack,
