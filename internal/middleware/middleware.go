@@ -62,16 +62,16 @@ func (h *SessionHandler) authMiddleware(next http.Handler) http.Handler {
 
 		token := model.SessionToken(cookieVal)
 
-		user, err := h.sessions.GetUserFromToken(ctx, token)
+		userId, err := h.sessions.GetUserIdFromToken(ctx, token)
 		if err != nil {
 			log.Println(err.Error())
 			http.Error(w, "Unauthenticated", http.StatusUnauthorized)
 			return
 		}
 
-		log.Println("User in session", user)
+		log.Println("User ID in session", userId)
 
-		ctx = auth.WithUser(r.Context(), user)
+		ctx = auth.WithUserId(r.Context(), userId)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

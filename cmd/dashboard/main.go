@@ -29,16 +29,16 @@ func main() {
 	deviceRepo := device.NewPostgresRepository(ctx, db.Pool)
 	measurementRepo := measurement.NewPostgresRepository(ctx, db.Pool)
 
-	htmlPresenter := presentation.NewHtmlPresenter()
 	userService := user.NewService(userRepo)
 	sessionService := session.NewService(sessionRepo)
 	authService := auth.NewService(userRepo, sessionRepo)
 	deviceService := device.NewService(deviceRepo)
 	measurementService := measurement.NewService(measurementRepo)
+	htmlPresenter := presentation.NewHtmlPresenter()
 
+	deviceHandler := device.NewHandler(deviceService, htmlPresenter)
 	userHandler := user.NewHandler(userService)
 	authHandler := auth.NewHandler(authService)
-	deviceHandler := device.NewHandler(deviceService)
 	webPageHandler := web.NewHandler(htmlPresenter)
 	measurementHandler := measurement.NewHandler(measurementService)
 

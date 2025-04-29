@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"iotstarter/internal/auth"
 	"iotstarter/internal/model"
+	"iotstarter/internal/presentation"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,11 +13,12 @@ import (
 )
 
 type Handler struct {
-	svc *Service
+	svc       *Service
+	presenter presentation.Presenter
 }
 
-func NewHandler(svc *Service) *Handler {
-	return &Handler{svc: svc}
+func NewHandler(svc *Service, presenter presentation.Presenter) *Handler {
+	return &Handler{svc: svc, presenter: presenter}
 }
 
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
@@ -30,9 +32,9 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	user, err := auth.UserFromContext(r.Context())
-	if err != nil {
-		log.Println("ERROR:", err.Error())
+	userId, ok := auth.UserIdFromContext(r.Context())
+	if !ok {
+		log.Println("ERROR:", "no user in context")
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
 		return
 	}
@@ -43,7 +45,7 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	device, err := h.svc.Register(ctx, user.ID, location)
+	device, err := h.svc.Register(ctx, userId, location)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error registering device", http.StatusInternalServerError)
@@ -57,30 +59,35 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	user, err := auth.UserFromContext(r.Context())
-	if err != nil {
-		log.Println("ERROR:", err.Error())
+	userId, ok := auth.UserIdFromContext(r.Context())
+	if !ok {
+		log.Println("ERROR:", "no user in context")
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
 		return
 	}
 
-	devices, err := h.svc.List(ctx, user.ID)
+	devices, err := h.svc.List(ctx, userId)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error retrieving devices", http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(devices)
+	err = h.presenter.Present(w, r, "devices", devices)
+	if err != nil {
+		log.Println("ERROR:", err.Error())
+		http.Error(w, "Error retrieving devices", http.StatusInternalServerError)
+		return
+	}
+
 }
 
 func (h *Handler) getById(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	user, err := auth.UserFromContext(r.Context())
-	if err != nil {
-		log.Println("ERROR:", err.Error())
+	userId, ok := auth.UserIdFromContext(r.Context())
+	if !ok {
+		log.Println("ERROR:", "no user in context")
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
 		return
 	}
@@ -92,7 +99,7 @@ func (h *Handler) getById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	deviceIdModel := model.DeviceId(deviceId)
-	device, err := h.svc.GetUserDeviceById(ctx, user.ID, deviceIdModel)
+	device, err := h.svc.GetUserDeviceById(ctx, userId, deviceIdModel)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Device not found", http.StatusNotFound)
@@ -106,9 +113,9 @@ func (h *Handler) reauth(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	user, err := auth.UserFromContext(r.Context())
-	if err != nil {
-		log.Println("ERROR:", err.Error())
+	userId, ok := auth.UserIdFromContext(r.Context())
+	if !ok {
+		log.Println("ERROR:", "no user in context")
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
 		return
 	}
@@ -121,7 +128,7 @@ func (h *Handler) reauth(w http.ResponseWriter, r *http.Request) {
 
 	dId := model.DeviceId(deviceId)
 
-	device, err := h.svc.Reauth(ctx, user.ID, dId)
+	device, err := h.svc.Reauth(ctx, userId, dId)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error reauthing device", http.StatusInternalServerError)

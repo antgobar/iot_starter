@@ -17,7 +17,7 @@ func NewHandler(svc *Service) *Handler {
 }
 
 func (h *Handler) Run() {
-	err := h.svc.sub.Subscribe(context.TODO(), config.BrokerMeasurementSubject, h.saveMeasurement)
+	err := h.svc.sub.Subscribe(context.Background(), config.BrokerMeasurementSubject, h.saveMeasurement)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
