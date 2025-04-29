@@ -35,7 +35,7 @@ func (h *Handler) getMeasurements(w http.ResponseWriter, r *http.Request) {
 
 	userId, ok := auth.UserIdFromContext(r.Context())
 	if !ok {
-		log.Println("ERROR:", err.Error())
+		log.Println("ERROR:", "error getting user from context")
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
 		return
 	}
