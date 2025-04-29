@@ -1,5 +1,8 @@
 {{define "content"}}
 <h1>Your Devices</h1>
+{{ if not .Devices }}
+<p>You have no devices registered.</p>
+{{ else }}
 <table>
     <thead>
         <tr>
@@ -9,7 +12,7 @@
         </tr>
     </thead>
     <tbody>
-        {{range .Data.Devices}}
+        {{range .Devices}}
         <tr>
             <td>{{.Location}}</td>
             <td>{{.CreatedAt}}</td>
@@ -18,4 +21,5 @@
         {{end}}
     </tbody>
 </table>
+{{end}}
 {{end}}

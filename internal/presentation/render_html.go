@@ -31,7 +31,7 @@ func NewHtmlPresenter() *Templates {
 	return &Templates{templates}
 }
 
-func (t *Templates) Present(w http.ResponseWriter, r *http.Request, name string, data any) error {
+func (t *Templates) Present(w http.ResponseWriter, r *http.Request, name string, payload any) error {
 	tmpl, exists := (*t.templates)[name]
 	if !exists {
 		return errors.New(name + " template not found")
@@ -43,7 +43,6 @@ func (t *Templates) Present(w http.ResponseWriter, r *http.Request, name string,
 		tmplName = "content"
 	}
 
-	payload := struct{ Data any }{Data: data}
 	return tmpl.ExecuteTemplate(w, tmplName, payload)
 }
 

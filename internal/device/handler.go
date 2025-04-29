@@ -72,13 +72,12 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error retrieving devices", http.StatusInternalServerError)
 		return
 	}
-	err = h.presenter.Present(w, r, "devices", devices)
-	if err != nil {
+	payload := struct{ Devices []*model.Device }{Devices: devices}
+	if err := h.presenter.Present(w, r, "devices", payload); err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error retrieving devices", http.StatusInternalServerError)
 		return
 	}
-
 }
 
 func (h *Handler) getById(w http.ResponseWriter, r *http.Request) {
