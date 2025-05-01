@@ -1,38 +1,35 @@
 package consumer
 
 import (
-	"iotstarter/internal/broker"
-	"iotstarter/internal/store"
+	"context"
+	"iotstarter/internal/config"
+	"iotstarter/internal/model"
 	"log"
+	"time"
 )
 
 type Handler struct {
-	store     store.Store
-	broker    broker.Broker
-	consumers []Consumer
+	svc *Service
 }
 
-func NewHandler(store store.Store, broker broker.Broker) *Handler {
-	return &Handler{store, broker, nil}
-}
-
-func (h *Handler) consumersSubjects() []string {
-	subjects := make([]string, 0)
-	for _, consumer := range h.consumers {
-		subjects = append(subjects, consumer.subject)
-	}
-	return subjects
+func NewHandler(svc *Service) *Handler {
+	return &Handler{svc}
 }
 
 func (h *Handler) Run() {
-	h.registerConsumers()
-	for _, consumer := range h.consumers {
-		err := h.broker.Subscribe(consumer.subject, consumer.handler)
-		if err != nil {
-			log.Fatalln(err.Error())
-		}
-		h.consumers = append(h.consumers, consumer)
+	err := h.svc.sub.Subscribe(context.Background(), config.BrokerMeasurementSubject, h.saveMeasurement)
+	if err != nil {
+		log.Fatalln(err.Error())
 	}
-	log.Printf("Transformer listening on subject(s): %s", h.consumersSubjects())
-	select {}
+	log.Printf("Transformer listening on subject: %s", config.BrokerMeasurementSubject)
+}
+
+func (h *Handler) saveMeasurement(m *model.Measurement) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
+	defer cancel()
+	err := h.svc.StoreMeasurement(ctx, m)
+	if err != nil {
+		log.Println(err.Error())
+	}
+	log.Println("Stored measurement under id", m.ID, "for device id", m.DeviceId)
 }

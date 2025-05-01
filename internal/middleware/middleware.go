@@ -3,8 +3,8 @@ package middleware
 import (
 	"context"
 	"iotstarter/internal/auth"
-	"iotstarter/internal/config"
-	"iotstarter/internal/store"
+	"iotstarter/internal/model"
+	"iotstarter/internal/session"
 	"log"
 	"net/http"
 	"strings"
@@ -13,20 +13,71 @@ import (
 
 type Middleware func(http.Handler) http.Handler
 
-func LoadMiddleware(s store.SessionStore) Middleware {
-	h := newHandler(s)
+type SessionHandler struct {
+	sessions *session.Service
+}
+
+func LoadMiddleware(s *session.Service) Middleware {
+	if s == nil {
+		return loggingMiddleware
+	}
+	h := SessionHandler{sessions: s}
 	return createMiddlewareStack(
 		loggingMiddleware,
 		h.authMiddleware,
 	)
 }
 
-type Handler struct {
-	store store.SessionStore
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
+		next.ServeHTTP(w, r)
+	})
 }
 
-func newHandler(store store.SessionStore) Handler {
-	return Handler{store: store}
+func isGatewayRequest(r *http.Request) bool {
+	return strings.HasPrefix(r.URL.Path, "/api/measurements") && r.Method == "POST"
+}
+
+func (h *SessionHandler) authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if isGatewayRequest(r) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		cookieVal, err := session.GetCookieValue(r)
+		if err != nil {
+			if isPublicPath(r.URL.Path) {
+				next.ServeHTTP(w, r)
+				return
+			}
+			http.Error(w, "Missing session - log in", http.StatusUnauthorized)
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+		defer cancel()
+
+		token := model.SessionToken(cookieVal)
+
+		user, err := h.sessions.GetUserFromToken(ctx, token)
+		if err != nil {
+			if isPublicPath(r.URL.Path) {
+				next.ServeHTTP(w, r)
+				return
+			}
+			log.Println(err.Error())
+			http.Error(w, "Unauthenticated", http.StatusUnauthorized)
+			return
+		}
+
+		log.Println("User in session", user)
+
+		ctx = auth.WithUser(r.Context(), user)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 func createMiddlewareStack(xs ...Middleware) Middleware {
@@ -39,20 +90,14 @@ func createMiddlewareStack(xs ...Middleware) Middleware {
 	}
 }
 
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
-		next.ServeHTTP(w, r)
-	})
-}
-
 func isPublicPath(path string) bool {
 	if path == "/" {
 		return true
 	}
 	publicPrefixes := []string{
-		"/login",
 		"/register",
+		"/login",
+		"/logout",
 		"/static",
 		"/favicon.ico",
 		"/api/auth/login",
@@ -64,48 +109,4 @@ func isPublicPath(path string) bool {
 		}
 	}
 	return false
-}
-
-func isSavingMeasurement(r *http.Request) bool {
-	if r.URL.Path == "/api/measurements" && r.Method == "POST" {
-		return auth.IsAuthedToken(r.Header.Get("x-api-key"))
-	}
-	return false
-}
-
-func (h *Handler) authMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if isPublicPath(r.URL.Path) {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		if isSavingMeasurement(r) {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		cookieVal, err := auth.GetCookieValue(r)
-		if err != nil {
-			http.Error(w, "No session value", http.StatusUnauthorized)
-			return
-		}
-
-		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
-		defer cancel()
-
-		user, err := h.store.GetUserFromToken(ctx, cookieVal)
-		if err != nil {
-			log.Println(err.Error())
-			http.Error(w, "Unauthenticated", http.StatusUnauthorized)
-			return
-		}
-
-		ctx = context.WithValue(r.Context(), config.UserKey, user)
-		r = r.WithContext(ctx)
-
-		log.Println("User set in request context", user)
-
-		next.ServeHTTP(w, r)
-	})
 }

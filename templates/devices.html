@@ -1,21 +1,42 @@
 {{define "content"}}
 <h1>Your Devices</h1>
-<table>
+<p>Register your devices</p>
+<form>
+    <div class="field">
+        <label for="location" class="label">Location</label>
+        <div class="control">
+            <input id="location" name="location" class="input" type="text" placeholder="Device location">
+        </div>
+    </div>
+    <div class="field">
+        <div class="control">
+            <input class="button" type="submit" hx-post="/devices" hx-target="#devices-rows" hx-swap="afterbegin"
+                value="Onboard device">
+        </div>
+    </div>
+</form>
+{{ if not .Devices }}
+<p>You have no devices registered.</p>
+{{ else }}
+<table class="table is-fullwidth">
     <thead>
         <tr>
             <th>Location</th>
             <th>Created At</th>
-            <th>API Key </th>
+            <th></th>
         </tr>
     </thead>
-    <tbody>
+    <tbody id="devices-rows">
         {{range .Devices}}
         <tr>
             <td>{{.Location}}</td>
             <td>{{.CreatedAt}}</td>
-            <td>{{.ApiKey}}</td>
+            <td></td>
         </tr>
         {{end}}
     </tbody>
 </table>
+{{end}}
+
+
 {{end}}

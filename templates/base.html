@@ -8,19 +8,12 @@
     <title>IoTA</title>
     <link rel="shortcut icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="stylesheet" href="/static/css/styles.css" />
-    <link rel="stylesheet" href="/static/css/simple.min.css">
+    <link rel="stylesheet" href="/static/css/bulma.min.css" />
     <script src="/static/js/htmx.min.js"></script>
-    <script defer src="/static/js/alpine.min.js"></script>
 </head>
 
 <body>
-    <nav>
-        <a href="/">IoTA</a>
-        <a href="/dashboard">Dashboard</a>
-        <a hx-get="/devices" hx-target="#main-content" hx-push-url="true">Devices</a>
-        <a href="/login">Login</a>
-        <a href="/register">Register</a>
-    </nav>
+    {{template "navbar" .}}
     <main id="main-content">
         {{template "content" .}}
     </main>

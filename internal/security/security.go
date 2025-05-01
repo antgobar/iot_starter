@@ -1,4 +1,4 @@
-package auth
+package security
 
 import (
 	"github.com/google/uuid"
@@ -7,10 +7,6 @@ import (
 
 func GenerateUUID() string {
 	return uuid.New().String()
-}
-
-func IsAuthedToken(cookeVal string) bool {
-	return cookeVal == "superSecret"
 }
 
 func HashPassword(password string) (string, error) {

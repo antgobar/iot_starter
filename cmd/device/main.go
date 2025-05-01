@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -24,7 +25,7 @@ func main() {
 
 	for {
 		measurement := model.Measurement{
-			DeviceId:  1,
+			DeviceId:  10,
 			Name:      "temperature",
 			Value:     rand.Float64() * 10,
 			Unit:      "C",
@@ -48,8 +49,9 @@ func sendMeasurement(url string, measurement model.Measurement) error {
 	if err != nil {
 		return err
 	}
+	apiKey := os.Getenv("TEST_DEVICE_API_KEY")
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-api-key", "superSecret")
+	req.Header.Set("x-api-key", apiKey)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

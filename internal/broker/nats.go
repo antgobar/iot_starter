@@ -1,8 +1,10 @@
 package broker
 
 import (
+	"context"
 	"encoding/json"
 	"iotstarter/internal/model"
+	"iotstarter/internal/typing"
 	"log"
 	"time"
 
@@ -21,7 +23,7 @@ func NewNatsBrokerClient(connectionString string) *NatsBrokerClient {
 	return &NatsBrokerClient{nc: nc}
 }
 
-func (b *NatsBrokerClient) Publish(subject string, measurement *model.Measurement) error {
+func (b *NatsBrokerClient) Publish(ctx context.Context, subject string, measurement *model.Measurement) error {
 	if measurement.Timestamp.IsZero() {
 		measurement.Timestamp = time.Now().UTC()
 		log.Println("Timestamp not provided: calculated on publish")
@@ -46,7 +48,7 @@ func (b *NatsBrokerClient) Close() {
 	b.nc.Close()
 }
 
-func (b *NatsBrokerClient) Subscribe(subject string, handler MeasurementHandler) error {
+func (b *NatsBrokerClient) Subscribe(ctx context.Context, subject string, handler typing.MeasurementHandler) error {
 	processMessage := func(msg *nats.Msg) {
 		var measurement model.Measurement
 		if err := json.Unmarshal(msg.Data, &measurement); err != nil {

@@ -1,55 +1,55 @@
-package store
+package device
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"iotstarter/internal/auth"
 	"iotstarter/internal/model"
-	"log"
+
+	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func (s *PostgresStore) RegisterDevice(ctx context.Context, userId int, location string) (*model.Device, error) {
+type PostgresRepo struct {
+	db *pgxpool.Pool
+}
+
+func NewPostgresRepository(ctx context.Context, db *pgxpool.Pool) *PostgresRepo {
+	return &PostgresRepo{db: db}
+}
+
+func (s *PostgresRepo) Create(ctx context.Context, device *model.Device) (*model.Device, error) {
 	sql := `
         INSERT INTO devices (user_id, location, api_key)
         VALUES ($1, $2, $3)
         RETURNING id, user_id, location, created_at, api_key
     `
 
-	device := model.Device{
-		UserId:   userId,
-		Location: location,
-		ApiKey:   auth.GenerateUUID(),
-	}
-
 	row := s.db.QueryRow(ctx, sql, device.UserId, device.Location, device.ApiKey)
 	if err := row.Scan(&device.ID, &device.UserId, &device.Location, &device.CreatedAt, &device.ApiKey); err != nil {
 		return nil, fmt.Errorf("failed to register device %v: %w", device, err)
 	}
-	return &device, nil
+	return device, nil
 }
 
-func (s *PostgresStore) ReauthDevice(ctx context.Context, userId int, deviceId int) (*model.Device, error) {
+func (s *PostgresRepo) Reauth(ctx context.Context, device *model.Device) (*model.Device, error) {
 	sql := `
 		UPDATE devices
 		SET api_key = $1
 		WHERE id = $2 AND user_id = $3
 		RETURNING id, user_id, location, created_at, api_key
 	`
-	device := model.Device{
-		ID:     deviceId,
-		UserId: userId,
-		ApiKey: auth.GenerateUUID(),
-	}
 
-	row := s.db.QueryRow(ctx, sql, device.ApiKey, device.ID, device.UserId)
-	if err := row.Scan(&device.ID, &device.UserId, &device.Location, &device.CreatedAt, &device.ApiKey); err != nil {
+	row := s.db.QueryRow(ctx, sql, device.ApiKey, device.ID, device.ApiKey)
+	storedDevice := model.Device{}
+	if err := row.Scan(&storedDevice.ID, &storedDevice.UserId, &storedDevice.Location, &storedDevice.CreatedAt, &storedDevice.ApiKey); err != nil {
 		return nil, fmt.Errorf("failed to register device %v: %w", device, err)
 	}
-	return &device, nil
+	return &storedDevice, nil
 
 }
 
-func (s *PostgresStore) GetDevices(ctx context.Context, userId int) ([]*model.Device, error) {
+func (s *PostgresRepo) List(ctx context.Context, userId model.UserId) ([]*model.Device, error) {
 	sql := `
 		SELECT id, user_id, location, created_at, api_key 
 		FROM devices
@@ -72,17 +72,36 @@ func (s *PostgresStore) GetDevices(ctx context.Context, userId int) ([]*model.De
 	if err = rows.Err(); err != nil {
 		return nil, fmt.Errorf("rows iteration error: %w", err)
 	}
-	log.Println("GOT devices for user", userId, "devices", len(devices))
+
 	return devices, nil
 }
 
-func (s *PostgresStore) GetDeviceById(ctx context.Context, deviceId int) (*model.Device, error) {
+func (s *PostgresRepo) GetUserDeviceById(ctx context.Context, userId model.UserId, deviceId model.DeviceId) (*model.Device, error) {
+	sql := `
+		SELECT id, location, created_at, api_key
+		FROM devices 
+		WHERE id = $1 AND user_id = $2
+		`
+	device := model.Device{}
+
+	row := s.db.QueryRow(ctx, sql, deviceId, userId)
+	if err := row.Scan(&device.ID, &device.Location, &device.CreatedAt, &device.ApiKey); err != nil {
+		if isNoRowsFoundError(err) {
+			return nil, ErrDeviceNotFound
+		}
+		return nil, fmt.Errorf("failed to retrieve device id %v: %w", deviceId, err)
+	}
+	return &device, nil
+}
+
+func (s *PostgresRepo) GetById(ctx context.Context, deviceId model.DeviceId) (*model.Device, error) {
 	sql := `
 		SELECT id, location, created_at, api_key
 		FROM devices 
 		WHERE id = $1
 		`
-	var device model.Device
+	device := model.Device{}
+
 	row := s.db.QueryRow(ctx, sql, deviceId)
 	if err := row.Scan(&device.ID, &device.Location, &device.CreatedAt, &device.ApiKey); err != nil {
 		if isNoRowsFoundError(err) {
@@ -91,4 +110,10 @@ func (s *PostgresStore) GetDeviceById(ctx context.Context, deviceId int) (*model
 		return nil, fmt.Errorf("failed to retrieve device id %v: %w", deviceId, err)
 	}
 	return &device, nil
+}
+
+var ErrDeviceNotFound = errors.New("device not found")
+
+func isNoRowsFoundError(err error) bool {
+	return errors.Is(err, pgx.ErrNoRows)
 }

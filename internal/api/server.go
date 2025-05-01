@@ -7,22 +7,33 @@ import (
 )
 
 type Server struct {
-	server *http.Server
+	httpServer *http.Server
 }
 
-func NewServer(addr string, h *Handler) Server {
-	stack := middleware.LoadMiddleware(h.store)
-	mux := h.registerUserRoutes()
-	server := &http.Server{
-		Addr:    addr,
-		Handler: stack(mux),
+type Router interface {
+	RegisterRoutes(mux *http.ServeMux)
+}
+
+func NewServer(addr string, mw middleware.Middleware, routers ...Router) *Server {
+	mux := http.NewServeMux()
+
+	for _, r := range routers {
+		r.RegisterRoutes(mux)
 	}
-	return Server{server: server}
+
+	handler := mw(mux)
+
+	return &Server{
+		httpServer: &http.Server{
+			Addr:    addr,
+			Handler: handler,
+		},
+	}
 }
 
-func (s Server) Run(appName string) {
-	log.Println(appName, "starting on", s.server.Addr)
-	if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("Could not listen on %s: %v", s.server.Addr, err)
+func (s *Server) Run(appName string) {
+	log.Printf("%s starting on %s\n", appName, s.httpServer.Addr)
+	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("listen: %s", err)
 	}
 }
