@@ -12,11 +12,11 @@ const userKey contextKey = "user"
 
 var ErrNoUser = errors.New("no user in context")
 
-func WithUserId(ctx context.Context, u model.UserId) context.Context {
+func WithUser(ctx context.Context, u *model.User) context.Context {
 	return context.WithValue(ctx, userKey, u)
 }
 
-func UserIdFromContext(ctx context.Context) (model.UserId, bool) {
-	u, ok := ctx.Value(userKey).(model.UserId)
+func UserFromContext(ctx context.Context) (*model.User, bool) {
+	u, ok := ctx.Value(userKey).(*model.User)
 	return u, ok
 }

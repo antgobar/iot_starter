@@ -10,10 +10,15 @@ import (
 
 const baseTemplateDir = "templates"
 
-var htmlFileNames []string = []string{
+var pageTemplates []string = []string{
 	"home",
 	"login",
 	"register",
+}
+
+var baseTemplates []string = []string{
+	"base",
+	"navbar",
 }
 
 type CompliedTemplates map[string]*template.Template
@@ -23,7 +28,7 @@ type Templates struct {
 }
 
 func NewHtmlPresenter() *Templates {
-	templates, err := compileTemplates(htmlFileNames)
+	templates, err := compileTemplates(baseTemplates, pageTemplates)
 	if err != nil {
 		log.Fatalln("Failed to compile templates:", err.Error())
 	}
@@ -45,13 +50,17 @@ func (t *Templates) Present(w http.ResponseWriter, r *http.Request, name string,
 	return tmpl.ExecuteTemplate(w, tmplName, payload)
 }
 
-func compileTemplates(pages []string) (*CompliedTemplates, error) {
+func compileTemplates(bases []string, pages []string) (*CompliedTemplates, error) {
 	var templates = make(CompliedTemplates)
 	for _, p := range pages {
+		var allPages = make([]string, 0)
+		for _, b := range bases {
+			allPages = append(allPages, fmt.Sprintf("%s/%s.html", baseTemplateDir, b))
+		}
 		var err error
+		allPages = append(allPages, fmt.Sprintf("%s/%s.html", baseTemplateDir, p))
 		templates[p], err = template.ParseFiles(
-			baseTemplateDir+"/base.html",
-			fmt.Sprintf("%s/%s.html", baseTemplateDir, p),
+			allPages...,
 		)
 		if err != nil {
 			return nil, err

@@ -41,11 +41,6 @@ func isGatewayRequest(r *http.Request) bool {
 
 func (h *SessionHandler) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if isPublicPath(r.URL.Path) {
-			next.ServeHTTP(w, r)
-			return
-		}
-
 		if isGatewayRequest(r) {
 			next.ServeHTTP(w, r)
 			return
@@ -53,7 +48,11 @@ func (h *SessionHandler) authMiddleware(next http.Handler) http.Handler {
 
 		cookieVal, err := session.GetCookieValue(r)
 		if err != nil {
-			http.Error(w, "No session value", http.StatusUnauthorized)
+			if isPublicPath(r.URL.Path) {
+				next.ServeHTTP(w, r)
+				return
+			}
+			http.Error(w, "Missing session - log in", http.StatusUnauthorized)
 			return
 		}
 
@@ -62,16 +61,20 @@ func (h *SessionHandler) authMiddleware(next http.Handler) http.Handler {
 
 		token := model.SessionToken(cookieVal)
 
-		userId, err := h.sessions.GetUserIdFromToken(ctx, token)
+		user, err := h.sessions.GetUserFromToken(ctx, token)
 		if err != nil {
+			if isPublicPath(r.URL.Path) {
+				next.ServeHTTP(w, r)
+				return
+			}
 			log.Println(err.Error())
 			http.Error(w, "Unauthenticated", http.StatusUnauthorized)
 			return
 		}
 
-		log.Println("User ID in session", userId)
+		log.Println("User in session", user)
 
-		ctx = auth.WithUserId(r.Context(), userId)
+		ctx = auth.WithUser(r.Context(), user)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

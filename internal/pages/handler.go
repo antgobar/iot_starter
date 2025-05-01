@@ -1,6 +1,8 @@
-package web
+package pages
 
 import (
+	"iotstarter/internal/auth"
+	"iotstarter/internal/model"
 	"iotstarter/internal/presentation"
 	"log"
 	"net/http"
@@ -28,7 +30,15 @@ func (h *Handler) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.presenter.Present(w, r, "home", nil); err != nil {
+	user, _ := auth.UserFromContext(r.Context())
+
+	data := struct {
+		User *model.User
+	}{
+		User: user,
+	}
+
+	if err := h.presenter.Present(w, r, "home", data); err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "template error", http.StatusInternalServerError)
 	}

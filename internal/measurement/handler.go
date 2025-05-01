@@ -33,7 +33,7 @@ func (h *Handler) getMeasurements(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId, ok := auth.UserIdFromContext(r.Context())
+	user, ok := auth.UserFromContext(r.Context())
 	if !ok {
 		log.Println("ERROR:", "error getting user from context")
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
@@ -42,7 +42,7 @@ func (h *Handler) getMeasurements(w http.ResponseWriter, r *http.Request) {
 
 	deviceId := model.DeviceId(params.deviceId)
 
-	measurements, err := h.svc.GetMeasurements(ctx, userId, deviceId, params.start, params.end)
+	measurements, err := h.svc.GetMeasurements(ctx, user.ID, deviceId, params.start, params.end)
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "Error retrieving measurements", http.StatusInternalServerError)

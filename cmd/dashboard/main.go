@@ -9,10 +9,10 @@ import (
 	"iotstarter/internal/device"
 	"iotstarter/internal/measurement"
 	"iotstarter/internal/middleware"
+	"iotstarter/internal/pages"
 	"iotstarter/internal/presentation"
 	"iotstarter/internal/session"
 	"iotstarter/internal/user"
-	"iotstarter/internal/web"
 	"log"
 	"os"
 	"time"
@@ -20,8 +20,7 @@ import (
 
 func main() {
 	log.SetOutput(os.Stdout)
-	log.SetFlags(log.LstdFlags | log.Lshortfile) // or log.Llongfile
-	log.Println("This is a log message.")
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	dbUrl := config.MustLoadEnv("DATABASE_URL")
 	apiAddr := config.MustLoadEnv("API_ADDR")
@@ -45,7 +44,7 @@ func main() {
 	deviceHandler := device.NewHandler(deviceService)
 	userHandler := user.NewHandler(userService)
 	authHandler := auth.NewHandler(authService)
-	webPageHandler := web.NewHandler(htmlPresenter)
+	webPageHandler := pages.NewHandler(htmlPresenter)
 	measurementHandler := measurement.NewHandler(measurementService)
 
 	middlewareStack := middleware.LoadMiddleware(sessionService)

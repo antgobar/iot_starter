@@ -30,7 +30,7 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	userId, ok := auth.UserIdFromContext(r.Context())
+	user, ok := auth.UserFromContext(r.Context())
 	if !ok {
 		log.Println("ERROR:", "no user in context")
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
@@ -43,7 +43,7 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	device, err := h.svc.Register(ctx, userId, location)
+	device, err := h.svc.Register(ctx, user.ID, location)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error registering device", http.StatusInternalServerError)
@@ -57,14 +57,14 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	userId, ok := auth.UserIdFromContext(r.Context())
+	user, ok := auth.UserFromContext(r.Context())
 	if !ok {
 		log.Println("ERROR:", "no user in context")
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
 		return
 	}
 
-	devices, err := h.svc.List(ctx, userId)
+	devices, err := h.svc.List(ctx, user.ID)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error retrieving devices", http.StatusInternalServerError)
@@ -78,7 +78,7 @@ func (h *Handler) getById(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	userId, ok := auth.UserIdFromContext(r.Context())
+	user, ok := auth.UserFromContext(r.Context())
 	if !ok {
 		log.Println("ERROR:", "no user in context")
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
@@ -92,7 +92,7 @@ func (h *Handler) getById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	deviceIdModel := model.DeviceId(deviceId)
-	device, err := h.svc.GetUserDeviceById(ctx, userId, deviceIdModel)
+	device, err := h.svc.GetUserDeviceById(ctx, user.ID, deviceIdModel)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Device not found", http.StatusNotFound)
@@ -106,7 +106,7 @@ func (h *Handler) reauth(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	userId, ok := auth.UserIdFromContext(r.Context())
+	user, ok := auth.UserFromContext(r.Context())
 	if !ok {
 		log.Println("ERROR:", "no user in context")
 		http.Error(w, "Error getting user", http.StatusUnauthorized)
@@ -121,7 +121,7 @@ func (h *Handler) reauth(w http.ResponseWriter, r *http.Request) {
 
 	dId := model.DeviceId(deviceId)
 
-	device, err := h.svc.Reauth(ctx, userId, dId)
+	device, err := h.svc.Reauth(ctx, user.ID, dId)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 		http.Error(w, "Error reauthing device", http.StatusInternalServerError)

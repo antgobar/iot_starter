@@ -1,0 +1,12 @@
+{{ define "navbar" }}
+<nav>
+    <a href="/">IoTA</a>
+    {{ if .User }}
+    <a hx-get="/devices" hx-target="#main-content" hx-push-url="true">Devices</a>
+    <a href="/logout">Logout</a>
+    {{ else }}
+    <a hx-get="/login" hx-target="#main-content" hx-push-url="true">Login</a>
+    <a hx-get="/register" hx-target="#main-content" hx-push-url="true">Register</a>
+    {{ end }}
+</nav>
+{{ end }}

@@ -12,10 +12,10 @@ import (
 	"iotstarter/internal/gateway"
 	"iotstarter/internal/measurement"
 	"iotstarter/internal/middleware"
+	"iotstarter/internal/pages"
 	"iotstarter/internal/presentation"
 	"iotstarter/internal/session"
 	"iotstarter/internal/user"
-	"iotstarter/internal/web"
 	"time"
 )
 
@@ -47,7 +47,7 @@ func main() {
 	userHandler := user.NewHandler(userService)
 	authHandler := auth.NewHandler(authService)
 	deviceHandler := device.NewHandler(deviceService)
-	webPageHandler := web.NewHandler(htmlPresenter)
+	webPageHandler := pages.NewHandler(htmlPresenter)
 	measurementHandler := measurement.NewHandler(measurementService)
 
 	gatewayService := gateway.NewService(brokerClient)

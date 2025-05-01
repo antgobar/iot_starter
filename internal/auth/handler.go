@@ -43,13 +43,13 @@ func (h *Handler) logOut(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
 	defer cancel()
 
-	userId, ok := UserIdFromContext(r.Context())
+	user, ok := UserFromContext(r.Context())
 	if !ok {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
-	err := h.svc.LogOut(ctx, userId)
+	err := h.svc.LogOut(ctx, user.ID)
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 	}

@@ -13,6 +13,6 @@ func NewService(r Repository) *Service {
 	return &Service{repo: r}
 }
 
-func (s *Service) GetUserIdFromToken(ctx context.Context, token model.SessionToken) (model.UserId, error) {
-	return s.repo.GetUserIdFromToken(ctx, token)
+func (s *Service) GetUserFromToken(ctx context.Context, token model.SessionToken) (*model.User, error) {
+	return s.repo.GetUserFromToken(ctx, token)
 }

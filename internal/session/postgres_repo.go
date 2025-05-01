@@ -60,21 +60,21 @@ func (s *PostgresRepo) Get(ctx context.Context, token model.SessionToken) (*mode
 	return &session, nil
 }
 
-func (s *PostgresRepo) GetUserIdFromToken(ctx context.Context, token model.SessionToken) (model.UserId, error) {
+func (s *PostgresRepo) GetUserFromToken(ctx context.Context, token model.SessionToken) (*model.User, error) {
 	sql := `
-		SELECT users.id
+		SELECT users.id, users.username, users.created_at, users.active
 		FROM users
 		INNER JOIN sessions ON users.id = sessions.user_id
 		WHERE sessions.token = $1
 	`
 
-	var userId model.UserId
+	var user model.User
 
 	row := s.db.QueryRow(ctx, sql, token)
-	if err := row.Scan(&userId); err != nil {
-		return userId, fmt.Errorf("failed to retrieve user id from token %v: %w", userId, err)
+	if err := row.Scan(&user.ID, &user.Username, &user.CreatedAt, &user.Active); err != nil {
+		return &user, fmt.Errorf("failed to retrieve user id from token %v: %w", user, err)
 	}
-	return userId, nil
+	return &user, nil
 }
 
 func (s *PostgresRepo) Clear(ctx context.Context, userId model.UserId) error {
