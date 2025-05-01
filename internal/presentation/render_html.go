@@ -10,9 +10,8 @@ import (
 
 const baseTemplateDir = "templates"
 
-var htmlPages []string = []string{
+var htmlFileNames []string = []string{
 	"home",
-	"devices",
 	"login",
 	"register",
 }
@@ -24,7 +23,7 @@ type Templates struct {
 }
 
 func NewHtmlPresenter() *Templates {
-	templates, err := compileTemplates(htmlPages)
+	templates, err := compileTemplates(htmlFileNames)
 	if err != nil {
 		log.Fatalln("Failed to compile templates:", err.Error())
 	}

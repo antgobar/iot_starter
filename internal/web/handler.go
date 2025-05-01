@@ -29,21 +29,22 @@ func (h *Handler) home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.presenter.Present(w, r, "home", nil); err != nil {
+		log.Println("ERROR:", err.Error())
 		http.Error(w, "template error", http.StatusInternalServerError)
 	}
 }
 
 func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	if err := h.presenter.Present(w, r, "login", nil); err != nil {
-		http.Error(w, "template error", http.StatusInternalServerError)
 		log.Println("ERROR:", err.Error())
+		http.Error(w, "template error", http.StatusInternalServerError)
 	}
 }
 
 func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 	if err := h.presenter.Present(w, r, "register", nil); err != nil {
-		http.Error(w, "template error", http.StatusInternalServerError)
 		log.Println("ERROR:", err.Error())
+		http.Error(w, "template error", http.StatusInternalServerError)
 	}
 }
 

@@ -22,7 +22,7 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(log.LstdFlags | log.Lshortfile) // or log.Llongfile
 	log.Println("This is a log message.")
-	
+
 	dbUrl := config.MustLoadEnv("DATABASE_URL")
 	apiAddr := config.MustLoadEnv("API_ADDR")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*5))
@@ -42,7 +42,7 @@ func main() {
 	measurementService := measurement.NewService(measurementRepo)
 	htmlPresenter := presentation.NewHtmlPresenter()
 
-	deviceHandler := device.NewHandler(deviceService, htmlPresenter)
+	deviceHandler := device.NewHandler(deviceService)
 	userHandler := user.NewHandler(userService)
 	authHandler := auth.NewHandler(authService)
 	webPageHandler := web.NewHandler(htmlPresenter)

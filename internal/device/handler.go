@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"iotstarter/internal/auth"
 	"iotstarter/internal/model"
-	"iotstarter/internal/presentation"
 	"log"
 	"net/http"
 	"strconv"
@@ -13,12 +12,11 @@ import (
 )
 
 type Handler struct {
-	svc       *Service
-	presenter presentation.Presenter
+	svc *Service
 }
 
-func NewHandler(svc *Service, presenter presentation.Presenter) *Handler {
-	return &Handler{svc: svc, presenter: presenter}
+func NewHandler(svc *Service) *Handler {
+	return &Handler{svc: svc}
 }
 
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
@@ -72,12 +70,8 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error retrieving devices", http.StatusInternalServerError)
 		return
 	}
-	payload := struct{ Devices []*model.Device }{Devices: devices}
-	if err := h.presenter.Present(w, r, "devices", payload); err != nil {
-		log.Println("ERROR:", err.Error())
-		http.Error(w, "Error retrieving devices", http.StatusInternalServerError)
-		return
-	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(devices)
 }
 
 func (h *Handler) getById(w http.ResponseWriter, r *http.Request) {
