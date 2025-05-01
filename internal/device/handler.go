@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"iotstarter/internal/auth"
 	"iotstarter/internal/model"
+	"iotstarter/internal/presentation"
 	"log"
 	"net/http"
 	"strconv"
@@ -13,16 +14,17 @@ import (
 
 type Handler struct {
 	svc *Service
+	p   presentation.Presenter
 }
 
-func NewHandler(svc *Service) *Handler {
-	return &Handler{svc: svc}
+func NewHandler(svc *Service, p presentation.Presenter) *Handler {
+	return &Handler{svc: svc, p: p}
 }
 
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/devices", h.register)
-	mux.HandleFunc("GET /api/devices", h.list)
-	mux.HandleFunc("GET /api/devices/{id}", h.getById)
+	mux.HandleFunc("GET /devices", h.list)
+	mux.HandleFunc("GET /devices/{id}", h.getById)
 	mux.HandleFunc("PATCH /api/devices/{id}/reauth", h.reauth)
 }
 
@@ -70,8 +72,23 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error retrieving devices", http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(devices)
+
+	log.Println("devices found", len(devices))
+
+	data := struct {
+		User    *model.User
+		Devices []*model.Device
+	}{
+		User:    user,
+		Devices: devices,
+	}
+	if err := h.p.Present(w, r, "devices", data); err != nil {
+		log.Println("ERROR:", err.Error())
+		http.Error(w, "resource error", http.StatusInternalServerError)
+	}
+
+	// w.Header().Set("Content-Type", "application/json")
+	// json.NewEncoder(w).Encode(devices)
 }
 
 func (h *Handler) getById(w http.ResponseWriter, r *http.Request) {

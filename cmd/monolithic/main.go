@@ -46,7 +46,7 @@ func main() {
 	devicesService := device.NewService(devicesRepo)
 	userHandler := user.NewHandler(userService)
 	authHandler := auth.NewHandler(authService)
-	deviceHandler := device.NewHandler(deviceService)
+	deviceHandler := device.NewHandler(deviceService, htmlPresenter)
 	webPageHandler := pages.NewHandler(htmlPresenter)
 	measurementHandler := measurement.NewHandler(measurementService)
 
