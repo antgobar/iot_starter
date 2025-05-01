@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -48,8 +49,9 @@ func sendMeasurement(url string, measurement model.Measurement) error {
 	if err != nil {
 		return err
 	}
+	apiKey := os.Getenv("TEST_DEVICE_API_KEY")
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-api-key", "08c002b8-2a9a-4824-8161-6feabfe9e7b3")
+	req.Header.Set("x-api-key", apiKey)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
