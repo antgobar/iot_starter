@@ -15,6 +15,7 @@ var pageTemplates []string = []string{
 	"login",
 	"register",
 	"devices",
+	"device_row",
 }
 
 var baseTemplates []string = []string{
@@ -60,7 +61,6 @@ func compileTemplates(bases []string, pages []string) (*CompliedTemplates, error
 		}
 		var err error
 		allPages = append(allPages, fmt.Sprintf("%s/%s.html", baseTemplateDir, p))
-		log.Println("template pages", allPages)
 		templates[p], err = template.ParseFiles(
 			allPages...,
 		)

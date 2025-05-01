@@ -22,7 +22,7 @@ func NewHandler(svc *Service, p presentation.Presenter) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /api/devices", h.register)
+	mux.HandleFunc("POST /devices", h.register)
 	mux.HandleFunc("GET /devices", h.list)
 	mux.HandleFunc("GET /devices/{id}", h.getById)
 	mux.HandleFunc("PATCH /api/devices/{id}/reauth", h.reauth)
@@ -51,8 +51,18 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error registering device", http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(device)
+	data := struct {
+		Device *model.Device
+	}{
+		Device: device,
+	}
+	if err := h.p.Present(w, r, "device_row", data); err != nil {
+		log.Println("ERROR:", err.Error())
+		http.Error(w, "resource error", http.StatusInternalServerError)
+	}
+
+	// w.Header().Set("Content-Type", "application/json")
+	// json.NewEncoder(w).Encode(device)
 }
 
 func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
