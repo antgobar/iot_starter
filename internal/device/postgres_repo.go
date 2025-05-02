@@ -40,10 +40,10 @@ func (s *PostgresRepo) Reauth(ctx context.Context, device *model.Device) (*model
 		RETURNING id, user_id, location, created_at, api_key
 	`
 
-	row := s.db.QueryRow(ctx, sql, device.ApiKey, device.ID, device.ApiKey)
+	row := s.db.QueryRow(ctx, sql, device.ApiKey, device.ID, device.UserId)
 	storedDevice := model.Device{}
 	if err := row.Scan(&storedDevice.ID, &storedDevice.UserId, &storedDevice.Location, &storedDevice.CreatedAt, &storedDevice.ApiKey); err != nil {
-		return nil, fmt.Errorf("failed to register device %v: %w", device, err)
+		return nil, fmt.Errorf("failed to reauth device %v: %w", device, err)
 	}
 	return &storedDevice, nil
 

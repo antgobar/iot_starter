@@ -22,16 +22,30 @@
     <thead>
         <tr>
             <th>Location</th>
-            <th>Created At</th>
-            <th></th>
+            <th>Date onboarded</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody id="devices-rows">
         {{range .Devices}}
         <tr>
             <td>{{.Location}}</td>
-            <td>{{.CreatedAt}}</td>
-            <td></td>
+            <td>{{.CreatedAt.Format "0000-00-00 00:00:00"}}</td>
+            <td id="device-row">
+                <div class="field is-grouped">
+                    <p class="control">
+                        <button class="button is-link">View Measurements</button>
+                    </p>
+                    <p class="control">
+                        <button hx-patch="/devices/{{.ID}}/reauth" hx-target="#device-row"class="button is-info">
+                            Regenerate API key
+                        </button>
+                    </p>
+                    <p class="control">
+                        <button class="button is-danger">Offboard</button>
+                    </p>
+                </div>
+            </td>
         </tr>
         {{end}}
     </tbody>

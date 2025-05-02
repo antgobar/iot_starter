@@ -1,7 +1,7 @@
 {{ define "content"}}
 <tr>
     <td>{{.Device.Location}}</td>
-    <td>{{.Device.CreatedAt}}</td>
+    <td>{{.Device.CreatedAt.Format "0000-00-00 00:00:00"}}</td>
     <td>
         <p>This is your device API key, you won't be able to see it after refreshing!</p>
         <input class="input is-link" type="text" value="{{.Device.ApiKey}}" />
