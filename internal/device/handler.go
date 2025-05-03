@@ -155,16 +155,6 @@ func (h *Handler) reauth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := struct {
-		Device *model.Device
-	}{
-		Device: device,
-	}
-	if err := h.p.Present(w, r, "device_row", data); err != nil {
-		log.Println("ERROR:", err.Error())
-		http.Error(w, "resource error", http.StatusInternalServerError)
-	}
-
-	// w.Header().Set("Content-Type", "application/json")
-	// json.NewEncoder(w).Encode(device)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(device)
 }

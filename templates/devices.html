@@ -28,17 +28,17 @@
     </thead>
     <tbody id="devices-rows">
         {{range .Devices}}
-        <tr>
+        <tr id="device-row-{{.ID}}">
             <td>{{.Location}}</td>
             <td>{{.CreatedAt.Format "0000-00-00 00:00:00"}}</td>
-            <td id="device-row">
+            <td>
                 <div class="field is-grouped">
                     <p class="control">
                         <button class="button is-link">View Measurements</button>
                     </p>
                     <p class="control">
-                        <button hx-patch="/devices/{{.ID}}/reauth" hx-target="#device-row"class="button is-info">
-                            Regenerate API key
+                        <button class="button is-primary reauth-btn" data-device-id="{{.ID}}">
+                            Regenerate API Key
                         </button>
                     </p>
                     <p class="control">
@@ -50,7 +50,99 @@
         {{end}}
     </tbody>
 </table>
+
+<div id="reauthModal" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-content">
+        <div class="box">
+            <label class="label">Your New API Key for device at location:</label>
+            <div class="field has-addons">
+                <div class="control is-expanded">
+                    <input id="apiKeyInput" class="input" type="text" readonly>
+                </div>
+                <div class="control">
+                    <button id="copyBtn" class="button" title="Copy to clipboard">
+                        Copy
+                    </button>
+                </div>
+            </div>
+            <button id="closeBtn" class="button is-text">Close</button>
+        </div>
+    </div>
+</div>
+
 {{end}}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const tableBody = document.getElementById('devices-rows');
+        const modal = document.getElementById('reauthModal');
+        const apiInput = document.getElementById('apiKeyInput');
+        const copyBtn = document.getElementById('copyBtn');
+        const closeBtn = document.getElementById('closeBtn');
 
+        tableBody.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.reauth-btn');
+            if (!btn) return;
 
+            const deviceId = btn.dataset.deviceId;
+            try {
+                const resp = await fetch(`/devices/${deviceId}/reauth`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                if (!resp.ok) {
+                    const errorModal = document.createElement('div');
+                    errorModal.className = 'modal is-active';
+                    errorModal.innerHTML = `
+                        <div class="modal-background"></div>
+                        <div class="modal-content">
+                            <div class="box">
+                                <p class="has-text-danger">Error: HTTP ${resp.status}</p>
+                                <button class="button is-text" id="errorCloseBtn">Close</button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(errorModal);
+
+                    const errorCloseBtn = errorModal.querySelector('#errorCloseBtn');
+                    const errorModalBackground = errorModal.querySelector('.modal-background');
+
+                    function closeErrorModal() {
+                        errorModal.remove();
+                    }
+
+                    errorCloseBtn.addEventListener('click', closeErrorModal);
+                    errorModalBackground.addEventListener('click', closeErrorModal);
+
+                    throw new Error(`HTTP ${resp.status}`);
+                }
+                const { apiKey } = await resp.json();
+
+                apiInput.value = apiKey;
+                modal.classList.add('is-active');
+            } catch (err) {
+                console.error('Reauth failed:', err);
+                alert('Could not re-authenticate. Please try again.');
+            }
+        });
+
+        copyBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(apiInput.value);
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => copyBtn.textContent = 'Copy', 1000);
+            } catch (err) {
+                console.error('Copy failed:', err);
+                alert('Unable to copy API key.');
+            }
+        });
+
+        function closeModal() {
+            modal.classList.remove('is-active');
+            apiInput.value = '';
+        }
+        closeBtn.addEventListener('click', closeModal);
+        modal.querySelector('.modal-background').addEventListener('click', closeModal);
+    });
+</script>
 {{end}}
