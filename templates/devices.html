@@ -1,17 +1,18 @@
 {{ define "content" }}
 <h1>Your Devices</h1>
 <p>Register your devices</p>
-<form>
+<form action="/devices" method="POST">
     <div class="field">
         <label for="location" class="label">Location</label>
         <div class="control">
-            <input id="location" name="location" class="input" type="text" placeholder="Device location">
+            <input id="location" name="location" class="input" type="text" placeholder="Device location" required>
         </div>
     </div>
     <div class="field">
         <div class="control">
-            <input class="button" type="submit" hx-post="/devices" hx-target="#devices-rows" hx-swap="afterbegin"
-                value="Onboard device">
+            <button type="submit" class="button is-primary">
+                Onboard device
+            </button>
         </div>
     </div>
 </form>
@@ -34,21 +35,14 @@
             <td>{{ .CreatedAt.Format "2006-01-02 15:04:05" }}</td>
             <td>
                 <div class="field is-grouped">
-                    <p class="control">
-                        <button class="button is-link">View Measurements</button>
-                    </p>
-                    <p class="control">
-                        <!-- Inline onclick handler -->
-                        <button class="button is-primary" data-device-id="{{ .ID }}" data-location="{{ .Location }}"
-                            onclick="reauthDevice(this)">
-                            Regenerate API Key
-                        </button>
-                    </p>
-                    <p class="control">
-                        <button class="button is-danger" data-device-id="{{ .ID }}" onclick="offboardDevice(this)">
-                            Offboard
-                        </button>
-                    </p>
+                    <button class="button is-link">View Measurements</button>
+                    <button class="button is-primary" data-device-id="{{ .ID }}" data-location="{{ .Location }}"
+                        onclick="reauthDevice(this)">
+                        Regenerate API Key
+                    </button>
+                    <button class="button is-danger" data-device-id="{{ .ID }}" onclick="offboardDevice(this)">
+                        Offboard
+                    </button>
                 </div>
             </td>
         </tr>
@@ -89,7 +83,6 @@
                 headers: { 'Content-Type': 'application/json' },
             })
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            alert('Device offboarded successfully.');
             row.remove();
         } catch (err) {
             console.error('Offboarding failed:', err);

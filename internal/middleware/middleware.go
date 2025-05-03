@@ -72,8 +72,6 @@ func (h *SessionHandler) authMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		log.Println("User in session", user)
-
 		ctx = auth.WithUser(r.Context(), user)
 
 		next.ServeHTTP(w, r.WithContext(ctx))

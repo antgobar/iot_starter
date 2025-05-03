@@ -42,6 +42,7 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 
 	location := r.FormValue("location")
 	if location == "" {
+		log.Println("ERROR: missing location")
 		http.Error(w, "location required", http.StatusBadRequest)
 		return
 	}
@@ -52,18 +53,9 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error registering device", http.StatusInternalServerError)
 		return
 	}
-	data := struct {
-		Device *model.Device
-	}{
-		Device: device,
-	}
-	if err := h.p.Present(w, r, "device_row", data); err != nil {
-		log.Println("ERROR:", err.Error())
-		http.Error(w, "resource error", http.StatusInternalServerError)
-	}
 
-	// w.Header().Set("Content-Type", "application/json")
-	// json.NewEncoder(w).Encode(device)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(device)
 }
 
 func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
