@@ -26,6 +26,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /devices", h.list)
 	mux.HandleFunc("GET /devices/{id}", h.getById)
 	mux.HandleFunc("PATCH /devices/{id}/reauth", h.reauth)
+	mux.HandleFunc("DELETE /devices/{id}", h.delete)
 }
 
 func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
@@ -157,4 +158,30 @@ func (h *Handler) reauth(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(device)
+}
+
+func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*3))
+	defer cancel()
+
+	user, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		log.Println("ERROR:", "no user in context")
+		http.Error(w, "Error getting user", http.StatusUnauthorized)
+		return
+	}
+	deviceIdStr := r.PathValue("id")
+	deviceId, err := strconv.Atoi(deviceIdStr)
+	if err != nil {
+		http.Error(w, "Invalid device Id", http.StatusBadRequest)
+		return
+	}
+
+	dId := model.DeviceId(deviceId)
+
+	if err := h.svc.DeleteDevice(ctx, user.ID, dId); err != nil {
+		log.Println("ERROR:", err)
+		http.Error(w, "Unable to offboard device with id: "+deviceIdStr, http.StatusUnauthorized)
+		return
+	}
 }

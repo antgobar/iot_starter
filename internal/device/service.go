@@ -43,7 +43,7 @@ func (s *Service) List(ctx context.Context, u model.UserId) ([]*model.Device, er
 }
 
 func (s *Service) GetUserDeviceById(ctx context.Context, u model.UserId, d model.DeviceId) (*model.Device, error) {
-	return s.repo.GetUserDeviceById(ctx, u, d)
+	return s.repo.GetByUserById(ctx, u, d)
 }
 
 func (s *Service) CheckDeviceToken(ctx context.Context, deviceId model.DeviceId, apiKey model.ApiKey) error {
@@ -57,4 +57,8 @@ func (s *Service) CheckDeviceToken(ctx context.Context, deviceId model.DeviceId,
 		return fmt.Errorf("invalid API key for device id: %s", deviceIDstr)
 	}
 	return nil
+}
+
+func (s *Service) DeleteDevice(ctx context.Context, userId model.UserId, deviceId model.DeviceId) error {
+	return s.repo.DeleteByUserIdById(ctx, userId, deviceId)
 }

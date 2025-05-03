@@ -45,7 +45,9 @@
                         </button>
                     </p>
                     <p class="control">
-                        <button class="button is-danger">Offboard</button>
+                        <button class="button is-danger" data-device-id="{{ .ID }}" onclick="offboardDevice(this)">
+                            Offboard
+                        </button>
                     </p>
                 </div>
             </td>
@@ -74,7 +76,27 @@
 </div>
 
 <script>
-    // Global reauth function (called via inline onclick)
+    async function offboardDevice(btn) {
+        if (!confirm("Are you sure you want to offboard this device? Clicking 'OK' will remove the device from your account.")) {
+            return;
+        }
+        const deviceId = btn.dataset.deviceId;
+        const row = document.getElementById(`device-row-${deviceId}`);
+
+        try {
+            const resp = await fetch(`/devices/${deviceId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+            })
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            alert('Device offboarded successfully.');
+            row.remove();
+        } catch (err) {
+            console.error('Offboarding failed:', err);
+            alert('Could not offboard device. Please try again.');
+        }
+    }
+
     async function reauthDevice(btn) {
         const deviceId = btn.dataset.deviceId;
         const location = btn.dataset.location;
@@ -90,7 +112,7 @@
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const { apiKey } = await resp.json();
 
-            modalLoc.textContent = `Device at ${location}`;
+            modalLoc.textContent = `Device at location: ${location}`;
             apiInput.value = apiKey;
             modal.classList.add('is-active');
         } catch (err) {
@@ -99,7 +121,6 @@
         }
     }
 
-    // Close logic extracted
     function closeReauthModal() {
         const modal = document.getElementById('reauthModal');
         const apiInput = document.getElementById('apiKeyInput');
@@ -151,7 +172,7 @@
     document.body.addEventListener('htmx:afterSwap', (evt) => {
         // adjust this if your swap target is different
         if (evt.detail.target.id === 'devices-rows' ||
-            evt.detail.target.id === 'main') {
+            evt.detail.target.id === 'main-content') {
             initReauthModalControls();
         }
     });
