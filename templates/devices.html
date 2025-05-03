@@ -1,4 +1,4 @@
-{{define "content"}}
+{{ define "content" }}
 <h1>Your Devices</h1>
 <p>Register your devices</p>
 <form>
@@ -15,6 +15,7 @@
         </div>
     </div>
 </form>
+
 {{ if not .Devices }}
 <p>You have no devices registered.</p>
 {{ else }}
@@ -27,17 +28,19 @@
         </tr>
     </thead>
     <tbody id="devices-rows">
-        {{range .Devices}}
-        <tr id="device-row-{{.ID}}">
-            <td>{{.Location}}</td>
-            <td>{{.CreatedAt.Format "0000-00-00 00:00:00"}}</td>
+        {{ range .Devices }}
+        <tr id="device-row-{{ .ID }}">
+            <td>{{ .Location }}</td>
+            <td>{{ .CreatedAt.Format "2006-01-02 15:04:05" }}</td>
             <td>
                 <div class="field is-grouped">
                     <p class="control">
                         <button class="button is-link">View Measurements</button>
                     </p>
                     <p class="control">
-                        <button class="button is-primary reauth-btn" data-device-id="{{.ID}}">
+                        <!-- Inline onclick handler -->
+                        <button class="button is-primary" data-device-id="{{ .ID }}" data-location="{{ .Location }}"
+                            onclick="reauthDevice(this)">
                             Regenerate API Key
                         </button>
                     </p>
@@ -47,7 +50,7 @@
                 </div>
             </td>
         </tr>
-        {{end}}
+        {{ end }}
     </tbody>
 </table>
 
@@ -55,15 +58,14 @@
     <div class="modal-background"></div>
     <div class="modal-content">
         <div class="box">
-            <label class="label">Your New API Key for device at location:</label>
+            <p id="modalLocation" class="subtitle"></p>
+            <label class="label">Your New API Key:</label>
             <div class="field has-addons">
                 <div class="control is-expanded">
                     <input id="apiKeyInput" class="input" type="text" readonly>
                 </div>
                 <div class="control">
-                    <button id="copyBtn" class="button" title="Copy to clipboard">
-                        Copy
-                    </button>
+                    <button id="copyBtn" class="button">Copy</button>
                 </div>
             </div>
             <button id="closeBtn" class="button is-text">Close</button>
@@ -71,78 +73,88 @@
     </div>
 </div>
 
-{{end}}
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const tableBody = document.getElementById('devices-rows');
+    // Global reauth function (called via inline onclick)
+    async function reauthDevice(btn) {
+        const deviceId = btn.dataset.deviceId;
+        const location = btn.dataset.location;
         const modal = document.getElementById('reauthModal');
         const apiInput = document.getElementById('apiKeyInput');
-        const copyBtn = document.getElementById('copyBtn');
+        const modalLoc = document.getElementById('modalLocation');
+
+        try {
+            const resp = await fetch(`/devices/${deviceId}/reauth`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const { apiKey } = await resp.json();
+
+            modalLoc.textContent = `Device at ${location}`;
+            apiInput.value = apiKey;
+            modal.classList.add('is-active');
+        } catch (err) {
+            console.error('Reauth failed:', err);
+            alert('Could not re-authenticate. Please try again.');
+        }
+    }
+
+    // Close logic extracted
+    function closeReauthModal() {
+        const modal = document.getElementById('reauthModal');
+        const apiInput = document.getElementById('apiKeyInput');
+        const modalLoc = document.getElementById('modalLocation');
+
+        modal.classList.remove('is-active');
+        apiInput.value = '';
+        modalLoc.textContent = '';
+    }
+
+    // Hook up copy + close + escape — needs to run after page load _and_ after HTMX swaps
+    function initReauthModalControls() {
+        const modalBg = document.querySelector('#reauthModal .modal-background');
         const closeBtn = document.getElementById('closeBtn');
+        const copyBtn = document.getElementById('copyBtn');
 
-        tableBody.addEventListener('click', async (e) => {
-            const btn = e.target.closest('.reauth-btn');
-            if (!btn) return;
+        // Avoid duplicate listeners
+        modalBg.removeEventListener('click', closeReauthModal);
+        closeBtn.removeEventListener('click', closeReauthModal);
+        document.removeEventListener('keydown', handleEscape);
 
-            const deviceId = btn.dataset.deviceId;
-            try {
-                const resp = await fetch(`/devices/${deviceId}/reauth`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                });
-                if (!resp.ok) {
-                    const errorModal = document.createElement('div');
-                    errorModal.className = 'modal is-active';
-                    errorModal.innerHTML = `
-                        <div class="modal-background"></div>
-                        <div class="modal-content">
-                            <div class="box">
-                                <p class="has-text-danger">Error: HTTP ${resp.status}</p>
-                                <button class="button is-text" id="errorCloseBtn">Close</button>
-                            </div>
-                        </div>
-                    `;
-                    document.body.appendChild(errorModal);
-
-                    const errorCloseBtn = errorModal.querySelector('#errorCloseBtn');
-                    const errorModalBackground = errorModal.querySelector('.modal-background');
-
-                    function closeErrorModal() {
-                        errorModal.remove();
-                    }
-
-                    errorCloseBtn.addEventListener('click', closeErrorModal);
-                    errorModalBackground.addEventListener('click', closeErrorModal);
-
-                    throw new Error(`HTTP ${resp.status}`);
-                }
-                const { apiKey } = await resp.json();
-
-                apiInput.value = apiKey;
-                modal.classList.add('is-active');
-            } catch (err) {
-                console.error('Reauth failed:', err);
-                alert('Could not re-authenticate. Please try again.');
-            }
-        });
-
+        // Bind them
+        modalBg.addEventListener('click', closeReauthModal);
+        closeBtn.addEventListener('click', closeReauthModal);
         copyBtn.addEventListener('click', async () => {
+            const apiInput = document.getElementById('apiKeyInput');
             try {
                 await navigator.clipboard.writeText(apiInput.value);
                 copyBtn.textContent = 'Copied!';
                 setTimeout(() => copyBtn.textContent = 'Copy', 1000);
-            } catch (err) {
-                console.error('Copy failed:', err);
+            } catch {
                 alert('Unable to copy API key.');
             }
         });
 
-        function closeModal() {
-            modal.classList.remove('is-active');
-            apiInput.value = '';
+        // Escape key handler
+        function handleEscape(e) {
+            if (e.key === 'Escape') {
+                closeReauthModal();
+            }
         }
-        closeBtn.addEventListener('click', closeModal);
-        modal.querySelector('.modal-background').addEventListener('click', closeModal);
+        document.addEventListener('keydown', handleEscape);
+    }
+
+    // Run on full load
+    document.addEventListener('DOMContentLoaded', initReauthModalControls);
+
+    // Re-run after HTMX swaps into this fragment
+    document.body.addEventListener('htmx:afterSwap', (evt) => {
+        // adjust this if your swap target is different
+        if (evt.detail.target.id === 'devices-rows' ||
+            evt.detail.target.id === 'main') {
+            initReauthModalControls();
+        }
     });
 </script>
-{{end}}
+{{ end }}
+{{ end }}
