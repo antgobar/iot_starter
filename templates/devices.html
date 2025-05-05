@@ -1,25 +1,29 @@
 {{ define "content" }}
-<h1>Your Devices</h1>
-<p>Register your devices</p>
-<form action="/devices" method="POST">
-    <div class="field">
-        <label for="location" class="label">Location</label>
-        <div class="control">
-            <input id="location" name="location" class="input" type="text" placeholder="Device location" required>
+<h1 class="title">Devices</h1>
+<h2 class="subtitle">Register a device</h2>
+
+<div class="box">
+    <form action="/devices" method="POST">
+        <div class="field">
+            <label for="location" class="label">Location</label>
+            <div class="control">
+                <input id="location" name="location" class="input" type="text" placeholder="Device location" required>
+            </div>
         </div>
-    </div>
-    <div class="field">
-        <div class="control">
-            <button type="submit" class="button is-primary">
-                Onboard device
-            </button>
+        <div class="field">
+            <div class="control">
+                <button type="submit" class="button is-primary">
+                    Onboard device
+                </button>
+            </div>
         </div>
-    </div>
-</form>
+    </form>
+</div>
 
 {{ if not .Devices }}
 <p>You have no devices registered.</p>
 {{ else }}
+<h2 class="subtitle">Your devices</h2>
 <table class="table is-fullwidth">
     <thead>
         <tr>

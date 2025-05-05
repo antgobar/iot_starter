@@ -14,12 +14,18 @@
 </head>
 
 <body>
-    {{template "navbar" .}}
-    <main id="main-content">
-        {{template "content" .}}
-    </main>
-    <footer>
-        <p>&copy; <span id="current-year"></span> IoT Dashboard. All rights reserved.</p>
+    <div class="block">
+        {{template "navbar" .}}
+    </div>
+    <div class="block">
+        <main id="main-content" class="container">
+            {{template "content" .}}
+        </main>
+    </div>
+    <footer class="footer block">
+        <div class="content has-text-centered">
+            <p>&copy; <span id="current-year"></span> IoT Dashboard. All rights reserved.</p>
+        </div>
     </footer>
     <script>
         document.getElementById('current-year').textContent = new Date().getFullYear();
