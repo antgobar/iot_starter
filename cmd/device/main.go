@@ -25,7 +25,7 @@ func main() {
 
 	for {
 		measurement := model.Measurement{
-			DeviceId:  10,
+			DeviceId:  43,
 			Name:      "temperature",
 			Value:     rand.Float64() * 10,
 			Unit:      "C",

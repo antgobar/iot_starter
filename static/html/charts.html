@@ -5,11 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Time Series Chart</title>
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Luxon for date handling -->
     <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
-    <!-- Chart.js Luxon adapter -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
     <style>
         body {
@@ -32,7 +29,7 @@
     </div>
 
     <script>
-        const endpoint = '/devices/1/measurements';
+        const endpoint = '/devices/{{.ID}}/measurements';
 
         async function fetchMeasurements() {
             try {

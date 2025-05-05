@@ -54,8 +54,17 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(device)
+	data := struct {
+		User   *model.User
+		Device *model.Device
+	}{
+		User:   user,
+		Device: device,
+	}
+	if err := h.p.Present(w, r, "device", data); err != nil {
+		log.Println("ERROR:", err.Error())
+		http.Error(w, "resource error", http.StatusInternalServerError)
+	}
 }
 
 func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
@@ -116,8 +125,18 @@ func (h *Handler) getById(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Device not found", http.StatusNotFound)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(device)
+
+	data := struct {
+		User   *model.User
+		Device *model.Device
+	}{
+		User:   user,
+		Device: device,
+	}
+	if err := h.p.Present(w, r, "device", data); err != nil {
+		log.Println("ERROR:", err.Error())
+		http.Error(w, "resource error", http.StatusInternalServerError)
+	}
 }
 
 func (h *Handler) reauth(w http.ResponseWriter, r *http.Request) {

@@ -1,29 +1,35 @@
 {{ define "content" }}
-<div class="block">
-    <h1 class="title">Devices</h1>
-    <h2 class="subtitle">Register a device</h2>
+<div>
 
-    <form action="/devices" method="POST">
-        <div class="field">
-            <label for="location" class="label">Location</label>
-            <div class="control">
-                <input id="location" name="location" class="input" type="text" placeholder="Device location" required>
+    <div>
+        <form action="/devices" method="POST">
+            <div class="field">
+                <label for="location" class="label">Location</label>
+                <div class="control">
+                    <input id="location" name="location" class="input" type="text" placeholder="Device location"
+                        required>
+                </div>
             </div>
-        </div>
-        <div class="field">
-            <div class="control">
-                <button type="submit" class="button is-primary">
-                    Onboard device
-                </button>
+            <div class="field">
+                <div class="control">
+                    <button type="submit" class="button is-primary">
+                        Onboard device
+                    </button>
+                </div>
             </div>
-        </div>
-    </form>
+        </form>
+    </div>
+
 
     {{ if not .Devices }}
-    <p>You have no devices registered.</p>
+    <div class="has-text-centered">
+        <h3 class="title is-3">You have no devices registered</h3>
+    </div>
     {{ else }}
-    <h2 class="subtitle">Your devices</h2>
     <table class="table is-fullwidth">
+        <caption>
+            <h3 class="title is-3">Onboarded Devices</h3>
+        </caption>
         <thead>
             <tr>
                 <th>Location</th>
@@ -38,7 +44,9 @@
                 <td>{{ .CreatedAt.Format "2006-01-02 15:04:05" }}</td>
                 <td>
                     <div class="field is-grouped">
-                        <button class="button is-link">View Device Details and Measurements</button>
+                        <a hx-get="/devices/{{.ID}}" hx-target="#main-content" hx-push-url="true" class="button is-link">
+                            View
+                        </a>
                         <button class="button is-primary" data-device-id="{{ .ID }}" data-location="{{ .Location }}"
                             onclick="reauthDevice(this)">
                             Regenerate API Key

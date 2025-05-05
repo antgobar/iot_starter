@@ -1,0 +1,85 @@
+{{ define "content" }}
+<div class="device-hero">
+    <h1>ID: {{ .Device.ID }}</h1>
+    <p>Location: {{ .Device.Location }}</p>
+    <div class="device-details">
+        <p><strong>Created:</strong> {{ .Device.CreatedAt }}</p>
+    </div>
+    <a href="/devices" class="back-link">Back to Devices</a>
+</div>
+<div id="chart-container">
+    <canvas id="timeSeriesChart"></canvas>
+</div>
+<script>
+
+    document.body.addEventListener('htmx:afterSwap', (evt) => {
+        // evt.detail.target is the element that received the new content
+        if (evt.detail.target.querySelector('#timeSeriesChart')) {
+            initChart();
+        }
+    });
+    const endpoint = '/api/devices/{{ .Device.ID }}/measurements';
+
+    async function fetchMeasurements() {
+        try {
+            const res = await fetch(endpoint);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return await res.json();
+        } catch (err) {
+            console.error('Fetch error:', err);
+            return [];
+        }
+    }
+
+    function processData(data) {
+        data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        return {
+            labels: data.map(m => m.timestamp),
+            values: data.map(m => m.value),
+            unit: data.length ? data[0].unit : ''
+        };
+    }
+
+    async function initChart() {
+        const raw = await fetchMeasurements();
+        const { labels, values, unit } = processData(raw);
+        const ctx = document.getElementById('timeSeriesChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: `Value (${unit})`,
+                    data: values,
+                    fill: false,
+                    borderWidth: 2,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'minute',
+                            stepSize: 5,
+                            displayFormats: {
+                                minute: "yyyy-MM-dd'T'HH:mm:ss"
+                            }
+                        },
+                        ticks: {
+                            autoSkip: false
+                        },
+                        title: { display: true, text: 'Timestamp (ISO)' }
+                    },
+                    y: {
+                        title: { display: true, text: `Value (${unit})` }
+                    }
+                }
+            }
+        });
+    }
+</script>
+{{ end}}
