@@ -1,19 +1,27 @@
 {{define "content"}}
-<section class="hero is-fullheight is-link">
+<section class="hero is-link is-fullheight">
     <div class="hero-body">
-        <p class="title">IoTA</p>
-        <p class="subtitle">IoTA is a simple IoT dashboard for managing your devices.</p>
-        <p>
-            {{if .User}}
-            <a href="/devices" hx-get="/devices" hx-target="#main-content" hx-push-url="true"
-                class="button is-primary">View Devices</a>
-            {{else}}
-            <a href="/login" hx-get="/login" hx-target="#main-content" hx-push-url="true"
-                class="button is-primary">Login</a>
-            <a href="/register" hx-get="/register" hx-target="#main-content" hx-push-url="true"
-                class="button is-primary">Register</a>
-            {{end}}
-        </p>
+        <div class="">
+            <p class="title">IoTA</p>
+            <p class="subtitle">
+                <strong>IoTA</strong> is a web application that allows you to manage your IoT devices and view their
+                measurements in real-time.
+            </p>
+            <p class="subtitle">
+                {{ if .User }}
+                Welcome back, {{ .User.Username }}! You can manage your devices and view their measurements.
+                <div class="buttons">
+                    <a href="/devices" class="button is-primary">Manage Devices</a>
+                </div>
+                {{ else }}
+                Welcome to IoTA! Please log in or register to manage your devices and view their measurements.
+            <div class="buttons">
+                <a href="/login" class="button is-primary">Login</a>
+                <a href="/register" class="button is-primary">Register</a>
+            </div>
+            {{ end }}
+            </p>
+        </div>
     </div>
 </section>
 {{end}}
