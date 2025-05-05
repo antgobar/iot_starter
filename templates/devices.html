@@ -1,8 +1,8 @@
 {{ define "content" }}
-<h1 class="title">Devices</h1>
-<h2 class="subtitle">Register a device</h2>
+<div class="block">
+    <h1 class="title">Devices</h1>
+    <h2 class="subtitle">Register a device</h2>
 
-<div class="box">
     <form action="/devices" method="POST">
         <div class="field">
             <label for="location" class="label">Location</label>
@@ -18,61 +18,60 @@
             </div>
         </div>
     </form>
-</div>
 
-{{ if not .Devices }}
-<p>You have no devices registered.</p>
-{{ else }}
-<h2 class="subtitle">Your devices</h2>
-<table class="table is-fullwidth">
-    <thead>
-        <tr>
-            <th>Location</th>
-            <th>Date onboarded</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody id="devices-rows">
-        {{ range .Devices }}
-        <tr id="device-row-{{ .ID }}">
-            <td>{{ .Location }}</td>
-            <td>{{ .CreatedAt.Format "2006-01-02 15:04:05" }}</td>
-            <td>
-                <div class="field is-grouped">
-                    <button class="button is-link">View Measurements</button>
-                    <button class="button is-primary" data-device-id="{{ .ID }}" data-location="{{ .Location }}"
-                        onclick="reauthDevice(this)">
-                        Regenerate API Key
-                    </button>
-                    <button class="button is-danger" data-device-id="{{ .ID }}" onclick="offboardDevice(this)">
-                        Offboard
-                    </button>
-                </div>
-            </td>
-        </tr>
-        {{ end }}
-    </tbody>
-</table>
+    {{ if not .Devices }}
+    <p>You have no devices registered.</p>
+    {{ else }}
+    <h2 class="subtitle">Your devices</h2>
+    <table class="table is-fullwidth">
+        <thead>
+            <tr>
+                <th>Location</th>
+                <th>Date onboarded</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="devices-rows">
+            {{ range .Devices }}
+            <tr id="device-row-{{ .ID }}">
+                <td>{{ .Location }}</td>
+                <td>{{ .CreatedAt.Format "2006-01-02 15:04:05" }}</td>
+                <td>
+                    <div class="field is-grouped">
+                        <button class="button is-link">View Device Details and Measurements</button>
+                        <button class="button is-primary" data-device-id="{{ .ID }}" data-location="{{ .Location }}"
+                            onclick="reauthDevice(this)">
+                            Regenerate API Key
+                        </button>
+                        <button class="button is-danger" data-device-id="{{ .ID }}" onclick="offboardDevice(this)">
+                            Offboard
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
 
-<div id="reauthModal" class="modal">
-    <div class="modal-background"></div>
-    <div class="modal-content">
-        <div class="box">
-            <p id="modalLocation" class="subtitle"></p>
-            <label class="label">Your New API Key:</label>
-            <div class="field has-addons">
-                <div class="control is-expanded">
-                    <input id="apiKeyInput" class="input" type="text" readonly>
+    <div id="reauthModal" class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-content">
+            <div class="box">
+                <p id="modalLocation" class="subtitle"></p>
+                <label class="label">Your New API Key:</label>
+                <div class="field has-addons">
+                    <div class="control is-expanded">
+                        <input id="apiKeyInput" class="input" type="text" readonly>
+                    </div>
+                    <div class="control">
+                        <button id="copyBtn" class="button">Copy</button>
+                    </div>
                 </div>
-                <div class="control">
-                    <button id="copyBtn" class="button">Copy</button>
-                </div>
+                <button id="closeBtn" class="button is-text">Close</button>
             </div>
-            <button id="closeBtn" class="button is-text">Close</button>
         </div>
     </div>
 </div>
-
 <script>
     async function offboardDevice(btn) {
         if (!confirm("Are you sure you want to offboard this device? Clicking 'OK' will remove the device from your account.")) {

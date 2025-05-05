@@ -1,8 +1,10 @@
 {{ define "navbar" }}
-<nav class="navbar block has-background-black-ter">
-    <div class="container">
+<nav class="navbar has-background-black-ter">
+    <div class="container block">
         <div class="navbar-brand">
-            <a href="/" class="navbar-item">IoTA</a>
+            <a href="/" class="navbar-item">
+                <h1 class="title">IoTA</h1>
+            </a>
             {{ if .User }}
             <a hx-get="/devices" hx-target="#main-content" hx-push-url="true" class="navbar-item">Devices</a>
             {{ end }}

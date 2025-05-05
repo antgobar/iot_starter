@@ -1,5 +1,19 @@
 {{define "content"}}
-<h1 class="title">IoTA Home</h1>
-<p class="title">Welcome to IoTA {{if .User }}{{ .User.Username }}{{end}} </p>
-<p>IoTA is a simple IoT dashboard for managing your devices.</p>
+<section class="hero is-fullheight is-link">
+    <div class="hero-body">
+        <p class="title">IoTA</p>
+        <p class="subtitle">IoTA is a simple IoT dashboard for managing your devices.</p>
+        <p>
+            {{if .User}}
+            <a href="/devices" hx-get="/devices" hx-target="#main-content" hx-push-url="true"
+                class="button is-primary">View Devices</a>
+            {{else}}
+            <a href="/login" hx-get="/login" hx-target="#main-content" hx-push-url="true"
+                class="button is-primary">Login</a>
+            <a href="/register" hx-get="/register" hx-target="#main-content" hx-push-url="true"
+                class="button is-primary">Register</a>
+            {{end}}
+        </p>
+    </div>
+</section>
 {{end}}

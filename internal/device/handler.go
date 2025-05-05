@@ -76,8 +76,6 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("devices found", len(devices))
-
 	data := struct {
 		User    *model.User
 		Devices []*model.Device
