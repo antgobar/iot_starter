@@ -2,7 +2,6 @@ package consumer
 
 import (
 	"context"
-	"iotstarter/internal/config"
 	"iotstarter/internal/model"
 	"log"
 	"time"
@@ -17,11 +16,11 @@ func NewHandler(svc *Service) *Handler {
 }
 
 func (h *Handler) Run() {
-	err := h.svc.sub.Subscribe(context.Background(), config.BrokerMeasurementSubject, h.saveMeasurement)
+	err := h.svc.sub.Subscribe(context.Background(), h.svc.subject, h.saveMeasurement)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
-	log.Printf("Transformer listening on subject: %s", config.BrokerMeasurementSubject)
+	log.Printf("Transformer listening on subject: %s", h.svc.subject)
 }
 
 func (h *Handler) saveMeasurement(m *model.Measurement) {
