@@ -1,42 +1,152 @@
-{{define "content"}}
-<h1>Your Devices</h1>
-<p>Register your devices</p>
-<form>
-    <div class="field">
-        <label for="location" class="label">Location</label>
-        <div class="control">
-            <input id="location" name="location" class="input" type="text" placeholder="Device location">
+{{ define "content" }}
+<div id="main-content">
+    <div>
+        <form action="/devices" method="POST">
+            <div class="field">
+                <label for="location" class="label">Location</label>
+                <div class="control">
+                    <input id="location" name="location" class="input" type="text" placeholder="Device location"
+                        required>
+                </div>
+            </div>
+            <div class="field">
+                <div class="control">
+                    <button type="submit" class="button is-primary">Onboard device</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {{ if not .Devices }}
+    <div class="has-text-centered">
+        <h3 class="title is-3">You have no devices registered</h3>
+    </div>
+    {{ else }}
+    <table class="table is-fullwidth">
+        <caption>
+            <h3 class="title is-3">Onboarded Devices</h3>
+        </caption>
+        <thead>
+            <tr>
+                <th>Location</th>
+                <th>Date onboarded</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="devices-rows">
+            {{ range .Devices }}
+            <tr id="device-row-{{ .ID }}">
+                <td>{{ .Location }}</td>
+                <td>{{ .CreatedAt.Format "2006-01-02 15:04:05" }}</td>
+                <td>
+                    <div class="field is-grouped">
+                        <a hx-get="/devices/{{.ID}}" hx-target="#main-content" hx-push-url="true"
+                            class="button is-link">View</a>
+                        <button class="button is-primary" data-device-id="{{ .ID }}" data-location="{{ .Location }}"
+                            onclick="reauthDevice(this)">Regenerate API Key</button>
+                        <button class="button is-danger" data-device-id="{{ .ID }}"
+                            onclick="offboardDevice(this)">Offboard</button>
+                    </div>
+                </td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+    {{ end }}
+
+    <div id="reauthModal" class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-content">
+            <div class="box">
+                <p id="modalLocation" class="subtitle"></p>
+                <label for="apiKeyInput" class="label">Your New API Key:</label>
+                <div class="field has-addons">
+                    <div class="control is-expanded">
+                        <input id="apiKeyInput" class="input" type="text" readonly>
+                    </div>
+                    <div class="control">
+                        <button id="copyBtn" class="button">Copy</button>
+                    </div>
+                </div>
+                <button id="closeBtn" class="button is-text">Close</button>
+            </div>
         </div>
     </div>
-    <div class="field">
-        <div class="control">
-            <input class="button" type="submit" hx-post="/devices" hx-target="#devices-rows" hx-swap="afterbegin"
-                value="Onboard device">
-        </div>
-    </div>
-</form>
-{{ if not .Devices }}
-<p>You have no devices registered.</p>
-{{ else }}
-<table class="table is-fullwidth">
-    <thead>
-        <tr>
-            <th>Location</th>
-            <th>Created At</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody id="devices-rows">
-        {{range .Devices}}
-        <tr>
-            <td>{{.Location}}</td>
-            <td>{{.CreatedAt}}</td>
-            <td></td>
-        </tr>
-        {{end}}
-    </tbody>
-</table>
-{{end}}
+</div>
 
+<script>
+    (function (container) {
+        // Offboard
+        async function offboardDevice(btn) {
+            if (!confirm("Are you sure you want to offboard this device?")) return;
+            const id = btn.dataset.deviceId;
+            const row = document.getElementById(`device-row-${id}`);
+            try {
+                const res = await fetch(`/devices/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error(res.status);
+                row.remove();
+            } catch (e) { alert('Offboard failed'); }
+        }
 
-{{end}}
+        // Reauth
+        function reauthDevice(btn) {
+            const id = btn.dataset.deviceId, loc = btn.dataset.location;
+            fetch(`/api/devices/${id}/reauth`, { method: 'PATCH' })
+                .then(r => r.ok ? r.json() : Promise.reject(r.status))
+                .then(data => {
+                    const modal = container.querySelector('#reauthModal');
+                    container.querySelector('#modalLocation').textContent = `Device at location: ${loc}`;
+                    container.querySelector('#apiKeyInput').value = data.apiKey;
+                    modal.classList.add('is-active');
+                }).catch(() => alert('Reauth failed'));
+        }
+
+        // Modal controls
+        function initReauthModalControls() {
+            const bg = container.querySelector('#reauthModal .modal-background');
+            const close = container.querySelector('#closeBtn');
+            const copy = container.querySelector('#copyBtn');
+            if (!bg || !close || !copy) return;
+
+            bg.removeEventListener('click', closeReauthModal);
+            close.removeEventListener('click', closeReauthModal);
+            document.removeEventListener('keydown', handleEscape);
+
+            bg.addEventListener('click', closeReauthModal);
+            close.addEventListener('click', closeReauthModal);
+            copy.addEventListener('click', async () => {
+                const inp = container.querySelector('#apiKeyInput');
+                try { await navigator.clipboard.writeText(inp.value); copy.textContent = 'Copied!'; setTimeout(() => copy.textContent = 'Copy', 1000); }
+                catch { alert('Copy failed'); }
+            });
+
+            function handleEscape(e) { if (e.key === 'Escape') closeReauthModal(); }
+            document.addEventListener('keydown', handleEscape);
+        }
+        function closeReauthModal() {
+            const modal = container.querySelector('#reauthModal');
+            const apiInput = container.querySelector('#apiKeyInput');
+            const locText = container.querySelector('#modalLocation');
+
+            // guard – if any are missing, just return
+            if (!modal || !apiInput || !locText) return;
+
+            modal.classList.remove('is-active');
+            apiInput.value = '';
+            locText.textContent = '';
+        }
+
+        // Hooks
+        document.addEventListener('DOMContentLoaded', initReauthModalControls);
+        document.body.addEventListener('htmx:afterSwap', evt => {
+            if (evt.detail.target.id === 'devices-rows' || evt.detail.target.id === 'main-content')
+                initReauthModalControls();
+        });
+
+        // Expose for inline onclick
+        window.offboardDevice = offboardDevice;
+        window.reauthDevice = reauthDevice;
+
+    })(document.getElementById('main-content'));
+</script>
+{{ end }}

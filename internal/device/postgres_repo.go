@@ -40,10 +40,10 @@ func (s *PostgresRepo) Reauth(ctx context.Context, device *model.Device) (*model
 		RETURNING id, user_id, location, created_at, api_key
 	`
 
-	row := s.db.QueryRow(ctx, sql, device.ApiKey, device.ID, device.ApiKey)
+	row := s.db.QueryRow(ctx, sql, device.ApiKey, device.ID, device.UserId)
 	storedDevice := model.Device{}
 	if err := row.Scan(&storedDevice.ID, &storedDevice.UserId, &storedDevice.Location, &storedDevice.CreatedAt, &storedDevice.ApiKey); err != nil {
-		return nil, fmt.Errorf("failed to register device %v: %w", device, err)
+		return nil, fmt.Errorf("failed to reauth device %v: %w", device, err)
 	}
 	return &storedDevice, nil
 
@@ -54,6 +54,7 @@ func (s *PostgresRepo) List(ctx context.Context, userId model.UserId) ([]*model.
 		SELECT id, user_id, location, created_at, api_key 
 		FROM devices
 		WHERE user_id = $1
+		ORDER BY created_at DESC
 	`
 	rows, err := s.db.Query(ctx, sql, userId)
 	if err != nil {
@@ -76,7 +77,7 @@ func (s *PostgresRepo) List(ctx context.Context, userId model.UserId) ([]*model.
 	return devices, nil
 }
 
-func (s *PostgresRepo) GetUserDeviceById(ctx context.Context, userId model.UserId, deviceId model.DeviceId) (*model.Device, error) {
+func (s *PostgresRepo) GetByUserById(ctx context.Context, userId model.UserId, deviceId model.DeviceId) (*model.Device, error) {
 	sql := `
 		SELECT id, location, created_at, api_key
 		FROM devices 
@@ -110,6 +111,19 @@ func (s *PostgresRepo) GetById(ctx context.Context, deviceId model.DeviceId) (*m
 		return nil, fmt.Errorf("failed to retrieve device id %v: %w", deviceId, err)
 	}
 	return &device, nil
+}
+
+func (s *PostgresRepo) DeleteByUserIdById(ctx context.Context, userId model.UserId, deviceId model.DeviceId) error {
+	sql := `
+		DELETE FROM devices
+		WHERE user_id = $1
+		AND id = $2
+	`
+	_, err := s.db.Exec(ctx, sql, userId, deviceId)
+	if err != nil {
+		return fmt.Errorf("failed to delete device  %d for user %d: %w", deviceId, userId, err)
+	}
+	return nil
 }
 
 var ErrDeviceNotFound = errors.New("device not found")

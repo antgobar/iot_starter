@@ -15,7 +15,7 @@ var pageTemplates []string = []string{
 	"login",
 	"register",
 	"devices",
-	"device_row",
+	"device",
 }
 
 var baseTemplates []string = []string{

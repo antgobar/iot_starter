@@ -52,7 +52,7 @@ func (h *SessionHandler) authMiddleware(next http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
-			http.Error(w, "Missing session - log in", http.StatusUnauthorized)
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
 
@@ -71,8 +71,6 @@ func (h *SessionHandler) authMiddleware(next http.Handler) http.Handler {
 			http.Error(w, "Unauthenticated", http.StatusUnauthorized)
 			return
 		}
-
-		log.Println("User in session", user)
 
 		ctx = auth.WithUser(r.Context(), user)
 

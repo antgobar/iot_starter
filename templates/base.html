@@ -10,15 +10,29 @@
     <link rel="stylesheet" href="/static/css/styles.css" />
     <link rel="stylesheet" href="/static/css/bulma.min.css" />
     <script src="/static/js/htmx.min.js"></script>
+
+    <!-- Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"
+        integrity="sha512-UXumZrZNiOwnTcZSHLOfcTs0aos2MzBWHXOHOuB0J/R44QB0dwY5JgfbvljXcklVf65Gc4El6RjZ+lnwd2az2g=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.2.0/chartjs-plugin-zoom.min.js"
+        integrity="sha512-FRGbE3pigbYamZnw4+uT4t63+QJOfg4MXSgzPn2t8AWg9ofmFvZ/0Z37ZpCawjfXLBSVX2p2CncsmUH2hzsgJg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
 </head>
 
 <body>
     {{template "navbar" .}}
-    <main id="main-content">
+    <main id="main-content" class="container">
         {{template "content" .}}
     </main>
-    <footer>
-        <p>&copy; <span id="current-year"></span> IoT Dashboard. All rights reserved.</p>
+    <footer class="footer block">
+        <div class="content has-text-centered">
+            <p>&copy; <span id="current-year"></span> IoT Dashboard. All rights reserved.</p>
+        </div>
     </footer>
     <script>
         document.getElementById('current-year').textContent = new Date().getFullYear();
