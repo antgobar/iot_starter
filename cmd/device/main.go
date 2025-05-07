@@ -6,7 +6,7 @@ import (
 	"flag"
 	"iotstarter/internal/model"
 	"log"
-	"math/rand"
+	"math"
 	"net/http"
 	"os"
 	"time"
@@ -24,12 +24,14 @@ func main() {
 	log.Println("Sending data to: ", url)
 
 	for {
+		currentTime := time.Now().UTC()
+
 		measurement := model.Measurement{
 			DeviceId:  43,
 			Name:      "temperature",
-			Value:     rand.Float64() * 10,
+			Value:     math.Sin(float64(currentTime.Unix()) / 10),
 			Unit:      "C",
-			Timestamp: time.Now().UTC(),
+			Timestamp: currentTime,
 		}
 		err := sendMeasurement(url, measurement)
 		if err != nil {

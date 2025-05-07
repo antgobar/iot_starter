@@ -1,6 +1,5 @@
 {{ define "content" }}
-<div>
-
+<div id="main-content">
     <div>
         <form action="/devices" method="POST">
             <div class="field">
@@ -12,14 +11,11 @@
             </div>
             <div class="field">
                 <div class="control">
-                    <button type="submit" class="button is-primary">
-                        Onboard device
-                    </button>
+                    <button type="submit" class="button is-primary">Onboard device</button>
                 </div>
             </div>
         </form>
     </div>
-
 
     {{ if not .Devices }}
     <div class="has-text-centered">
@@ -44,29 +40,26 @@
                 <td>{{ .CreatedAt.Format "2006-01-02 15:04:05" }}</td>
                 <td>
                     <div class="field is-grouped">
-                        <a hx-get="/devices/{{.ID}}" hx-target="#main-content" hx-push-url="true" class="button is-link">
-                            View
-                        </a>
+                        <a hx-get="/devices/{{.ID}}" hx-target="#main-content" hx-push-url="true"
+                            class="button is-link">View</a>
                         <button class="button is-primary" data-device-id="{{ .ID }}" data-location="{{ .Location }}"
-                            onclick="reauthDevice(this)">
-                            Regenerate API Key
-                        </button>
-                        <button class="button is-danger" data-device-id="{{ .ID }}" onclick="offboardDevice(this)">
-                            Offboard
-                        </button>
+                            onclick="reauthDevice(this)">Regenerate API Key</button>
+                        <button class="button is-danger" data-device-id="{{ .ID }}"
+                            onclick="offboardDevice(this)">Offboard</button>
                     </div>
                 </td>
             </tr>
             {{ end }}
         </tbody>
     </table>
+    {{ end }}
 
     <div id="reauthModal" class="modal">
         <div class="modal-background"></div>
         <div class="modal-content">
             <div class="box">
                 <p id="modalLocation" class="subtitle"></p>
-                <label class="label">Your New API Key:</label>
+                <label for="apiKeyInput" class="label">Your New API Key:</label>
                 <div class="field has-addons">
                     <div class="control is-expanded">
                         <input id="apiKeyInput" class="input" type="text" readonly>
@@ -80,106 +73,80 @@
         </div>
     </div>
 </div>
+
 <script>
-    async function offboardDevice(btn) {
-        if (!confirm("Are you sure you want to offboard this device? Clicking 'OK' will remove the device from your account.")) {
-            return;
-        }
-        const deviceId = btn.dataset.deviceId;
-        const row = document.getElementById(`device-row-${deviceId}`);
-
-        try {
-            const resp = await fetch(`/devices/${deviceId}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-            })
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            row.remove();
-        } catch (err) {
-            console.error('Offboarding failed:', err);
-            alert('Could not offboard device. Please try again.');
-        }
-    }
-
-    async function reauthDevice(btn) {
-        const deviceId = btn.dataset.deviceId;
-        const location = btn.dataset.location;
-        const modal = document.getElementById('reauthModal');
-        const apiInput = document.getElementById('apiKeyInput');
-        const modalLoc = document.getElementById('modalLocation');
-
-        try {
-            const resp = await fetch(`/devices/${deviceId}/reauth`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-            });
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            const { apiKey } = await resp.json();
-
-            modalLoc.textContent = `Device at location: ${location}`;
-            apiInput.value = apiKey;
-            modal.classList.add('is-active');
-        } catch (err) {
-            console.error('Reauth failed:', err);
-            alert('Could not re-authenticate. Please try again.');
-        }
-    }
-
-    function closeReauthModal() {
-        const modal = document.getElementById('reauthModal');
-        const apiInput = document.getElementById('apiKeyInput');
-        const modalLoc = document.getElementById('modalLocation');
-
-        modal.classList.remove('is-active');
-        apiInput.value = '';
-        modalLoc.textContent = '';
-    }
-
-    // Hook up copy + close + escape — needs to run after page load _and_ after HTMX swaps
-    function initReauthModalControls() {
-        const modalBg = document.querySelector('#reauthModal .modal-background');
-        const closeBtn = document.getElementById('closeBtn');
-        const copyBtn = document.getElementById('copyBtn');
-
-        // Avoid duplicate listeners
-        modalBg.removeEventListener('click', closeReauthModal);
-        closeBtn.removeEventListener('click', closeReauthModal);
-        document.removeEventListener('keydown', handleEscape);
-
-        // Bind them
-        modalBg.addEventListener('click', closeReauthModal);
-        closeBtn.addEventListener('click', closeReauthModal);
-        copyBtn.addEventListener('click', async () => {
-            const apiInput = document.getElementById('apiKeyInput');
+    (function (container) {
+        // Offboard
+        async function offboardDevice(btn) {
+            if (!confirm("Are you sure you want to offboard this device?")) return;
+            const id = btn.dataset.deviceId;
+            const row = document.getElementById(`device-row-${id}`);
             try {
-                await navigator.clipboard.writeText(apiInput.value);
-                copyBtn.textContent = 'Copied!';
-                setTimeout(() => copyBtn.textContent = 'Copy', 1000);
-            } catch {
-                alert('Unable to copy API key.');
-            }
+                const res = await fetch(`/devices/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error(res.status);
+                row.remove();
+            } catch (e) { alert('Offboard failed'); }
+        }
+
+        // Reauth
+        function reauthDevice(btn) {
+            const id = btn.dataset.deviceId, loc = btn.dataset.location;
+            fetch(`/api/devices/${id}/reauth`, { method: 'PATCH' })
+                .then(r => r.ok ? r.json() : Promise.reject(r.status))
+                .then(data => {
+                    const modal = container.querySelector('#reauthModal');
+                    container.querySelector('#modalLocation').textContent = `Device at location: ${loc}`;
+                    container.querySelector('#apiKeyInput').value = data.apiKey;
+                    modal.classList.add('is-active');
+                }).catch(() => alert('Reauth failed'));
+        }
+
+        // Modal controls
+        function initReauthModalControls() {
+            const bg = container.querySelector('#reauthModal .modal-background');
+            const close = container.querySelector('#closeBtn');
+            const copy = container.querySelector('#copyBtn');
+            if (!bg || !close || !copy) return;
+
+            bg.removeEventListener('click', closeReauthModal);
+            close.removeEventListener('click', closeReauthModal);
+            document.removeEventListener('keydown', handleEscape);
+
+            bg.addEventListener('click', closeReauthModal);
+            close.addEventListener('click', closeReauthModal);
+            copy.addEventListener('click', async () => {
+                const inp = container.querySelector('#apiKeyInput');
+                try { await navigator.clipboard.writeText(inp.value); copy.textContent = 'Copied!'; setTimeout(() => copy.textContent = 'Copy', 1000); }
+                catch { alert('Copy failed'); }
+            });
+
+            function handleEscape(e) { if (e.key === 'Escape') closeReauthModal(); }
+            document.addEventListener('keydown', handleEscape);
+        }
+        function closeReauthModal() {
+            const modal = container.querySelector('#reauthModal');
+            const apiInput = container.querySelector('#apiKeyInput');
+            const locText = container.querySelector('#modalLocation');
+
+            // guard – if any are missing, just return
+            if (!modal || !apiInput || !locText) return;
+
+            modal.classList.remove('is-active');
+            apiInput.value = '';
+            locText.textContent = '';
+        }
+
+        // Hooks
+        document.addEventListener('DOMContentLoaded', initReauthModalControls);
+        document.body.addEventListener('htmx:afterSwap', evt => {
+            if (evt.detail.target.id === 'devices-rows' || evt.detail.target.id === 'main-content')
+                initReauthModalControls();
         });
 
-        // Escape key handler
-        function handleEscape(e) {
-            if (e.key === 'Escape') {
-                closeReauthModal();
-            }
-        }
-        document.addEventListener('keydown', handleEscape);
-    }
+        // Expose for inline onclick
+        window.offboardDevice = offboardDevice;
+        window.reauthDevice = reauthDevice;
 
-    // Run on full load
-    document.addEventListener('DOMContentLoaded', initReauthModalControls);
-
-    // Re-run after HTMX swaps into this fragment
-    document.body.addEventListener('htmx:afterSwap', (evt) => {
-        // adjust this if your swap target is different
-        if (evt.detail.target.id === 'devices-rows' ||
-            evt.detail.target.id === 'main-content') {
-            initReauthModalControls();
-        }
-    });
+    })(document.getElementById('main-content'));
 </script>
-{{ end }}
 {{ end }}

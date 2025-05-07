@@ -5,81 +5,82 @@
     <div class="device-details">
         <p><strong>Created:</strong> {{ .Device.CreatedAt }}</p>
     </div>
-    <a href="/devices" class="back-link">Back to Devices</a>
+    <a hx-get="/devices" hx-target="#main-content" hx-push-url="true" class="back-link">Back to Devices</a>
 </div>
+
+<label for="measurement-begin" class="label">Begin</label>
+<input class="input" type="datetime-local" id="measurement-begin" name="begin" />
+<label for="measurement-end" class="label">End</label>
+<input class="input" type="datetime-local" id="measurement-end" name="end" />
+
 <div id="chart-container">
     <canvas id="timeSeriesChart"></canvas>
 </div>
 <script>
+    if (typeof currentChart === 'undefined') {
+        var currentChart = null;
+    }
+    (function (container) {
+        const endpoint = `/api/devices/{{ .Device.ID }}/measurements`;
 
-    document.body.addEventListener('htmx:afterSwap', (evt) => {
-        // evt.detail.target is the element that received the new content
-        if (evt.detail.target.querySelector('#timeSeriesChart')) {
-            initChart();
-        }
-    });
-    const endpoint = '/api/devices/{{ .Device.ID }}/measurements';
-
-    async function fetchMeasurements() {
-        try {
+        async function fetchMeasurements() {
             const res = await fetch(endpoint);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return await res.json();
-        } catch (err) {
-            console.error('Fetch error:', err);
-            return [];
+            if (!res.ok) throw new Error(res.status);
+            return res.json();
         }
-    }
-
-    function processData(data) {
-        data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-        return {
-            labels: data.map(m => m.timestamp),
-            values: data.map(m => m.value),
-            unit: data.length ? data[0].unit : ''
-        };
-    }
-
-    async function initChart() {
-        const raw = await fetchMeasurements();
-        const { labels, values, unit } = processData(raw);
-        const ctx = document.getElementById('timeSeriesChart').getContext('2d');
-
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [{
-                    label: `Value (${unit})`,
-                    data: values,
-                    fill: false,
-                    borderWidth: 2,
-                    pointRadius: 3
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: {
-                            unit: 'minute',
-                            stepSize: 5,
-                            displayFormats: {
-                                minute: "yyyy-MM-dd'T'HH:mm:ss"
-                            }
-                        },
-                        ticks: {
-                            autoSkip: false
-                        },
-                        title: { display: true, text: 'Timestamp (ISO)' }
-                    },
-                    y: {
-                        title: { display: true, text: `Value (${unit})` }
-                    }
-                }
+        function processData(data) {
+            data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            return {
+                labels: data.map(m => m.timestamp),
+                values: data.map(m => m.value),
+                unit: data[0]?.unit || ''
+            };
+        }
+        async function initChart() {
+            if (currentChart) {
+                currentChart.destroy();
             }
+            try {
+                const raw = await fetchMeasurements();
+                const { labels, values, unit } = processData(raw);
+                const canvas = container.querySelector('#timeSeriesChart');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                var newChart = new Chart(ctx, {
+                    type: 'line', data: { labels, datasets: [{ label: `Value (${unit})`, data: values, fill: false, borderWidth: 2, pointRadius: 3 }] },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { type: 'time', time: { unit: 'minute', stepSize: 5, displayFormats: { minute: "yyyy-MM-dd'T'HH:mm:ss" } }, ticks: { autoSkip: false }, title: { display: true, text: 'Timestamp (ISO)' } },
+                            y: { title: { display: true, text: `Value (${unit})` } }
+                        },
+                        plugins: {
+                            zoom: {
+                                pan: {
+                                    enabled: true,
+                                    modifierKey: 'ctrl',
+                                },
+                                zoom: {
+                                    drag: {
+                                        enabled: true
+                                    },
+                                    mode: 'xy',
+                                },
+                            }
+                        }
+                    }
+                });
+                currentChart = newChart;
+            } catch (err) {
+                console.error('Chart init failed', err);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initChart);
+        document.body.addEventListener('htmx:afterSwap', evt => {
+            if (evt.detail.target.querySelector('#timeSeriesChart')) initChart();
         });
-    }
+
+    })(document.getElementById('main-content'));
 </script>
-{{ end}}
+{{ end }}

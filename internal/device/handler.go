@@ -25,7 +25,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /devices", h.register)
 	mux.HandleFunc("GET /devices", h.list)
 	mux.HandleFunc("GET /devices/{id}", h.getById)
-	mux.HandleFunc("PATCH /devices/{id}/reauth", h.reauth)
+	mux.HandleFunc("PATCH /api/devices/{id}/reauth", h.reauth)
 	mux.HandleFunc("DELETE /devices/{id}", h.delete)
 }
 
