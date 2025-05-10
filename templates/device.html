@@ -1,17 +1,47 @@
 {{ define "content" }}
-<div class="device-hero">
-    <h1>ID: {{ .Device.ID }}</h1>
-    <p>Location: {{ .Device.Location }}</p>
-    <div class="device-details">
-        <p><strong>Created:</strong> {{ .Device.CreatedAt }}</p>
+<section class="hero py-4">
+    <div class="hero-body">
+        <div class="container">
+            <h1 class="title is-3">Device ID: {{ .Device.ID }}</h1>
+            <h2 class="subtitle is-5">Location: {{ .Device.Location }}</h2>
+        </div>
     </div>
-    <a hx-get="/devices" hx-target="#main-content" hx-push-url="true" class="back-link">Back to Devices</a>
+</section>
+
+<div class="container mt-5">
+    <div class="card">
+        <header class="card-header">
+            <p class="card-header-title">Device Details</p>
+        </header>
+        <div class="card-content">
+            <div class="content">
+                <div class="columns is-multiline">
+                    <div class="column is-half">
+                        <p><strong>Created At:</strong> {{ .Device.CreatedAt }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="mt-4">
+        <a hx-get="/devices" hx-target="#main-content" hx-push-url="true" class="button is-link">
+            ← Back to Devices
+        </a>
+    </div>
 </div>
 
-<label for="measurement-begin" class="label">Begin</label>
-<input class="input" type="datetime-local" id="measurement-begin" name="begin" />
-<label for="measurement-end" class="label">End</label>
-<input class="input" type="datetime-local" id="measurement-end" name="end" />
+<form>
+    <div class="field is-grouped is-grouped-centered">
+        <div class="field">
+            <label for="measurement-begin" class="label">Begin</label>
+            <input class="input" type="datetime-local" id="measurement-begin" name="begin" />
+        </div>
+        <div class="field">
+            <label for="measurement-end" class="label">End</label>
+            <input class="input" type="datetime-local" id="measurement-end" name="end" />
+        </div>
+    </div>
+</form>
 
 <div id="chart-container">
     <canvas id="timeSeriesChart"></canvas>

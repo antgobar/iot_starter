@@ -10,5 +10,8 @@ The user can create an register for an account. After logging in, the user can r
 
 - [X] Support monolith implementation using goroutines & channels
 - [X] Allow future split into microservices with cmd apps
-- [ ] Add a description of the project
+- [X] Add a description of the project
+- [X] Measurements dashboard by date
+- [ ] User can create alerts for data e.g. threshold (absolute or average)
+- [ ] Cache: sessions, rate limiting, last seen entities
 - [ ] PostgresDb + TimescaleDb to store and retrieve data
