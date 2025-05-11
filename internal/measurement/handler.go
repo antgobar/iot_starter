@@ -41,7 +41,7 @@ func (h *Handler) getMeasurements(w http.ResponseWriter, r *http.Request) {
 	}
 
 	deviceId := model.DeviceId(params.deviceId)
-	measurements, err := h.svc.GetMeasurements(ctx, user.ID, deviceId, params.start, params.end)
+	measurements, err := h.svc.GetMeasurements(ctx, user.ID, deviceId, params.begin, params.end)
 
 	if err != nil {
 		log.Println(err.Error())

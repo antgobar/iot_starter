@@ -30,25 +30,80 @@
     </div>
 </div>
 
-<form>
-    <div class="field is-grouped is-grouped-centered">
-        <div class="field">
-            <label for="measurement-begin" class="label">Begin</label>
-            <input class="input" type="datetime-local" id="measurement-begin" name="begin" />
-        </div>
-        <div class="field">
-            <label for="measurement-end" class="label">End</label>
-            <input class="input" type="datetime-local" id="measurement-end" name="end" />
+<div class="container mt-5">
+    <!-- Time range controls -->
+    <div class="card mb-4">
+        <header class="card-header">
+            <p class="card-header-title">Time Range Selection</p>
+        </header>
+        <div class="card-content">
+            <!-- Quick select buttons -->
+            <div class="field">
+                <div class="buttons has-addons is-centered mb-4">
+                    <button class="button is-primary is-selected" data-range="1h">Last Hour</button>
+                    <button class="button" data-range="6h">Last 6 Hours</button>
+                    <button class="button" data-range="24h">Last 24 Hours</button>
+                    <button class="button" data-range="7d">Last 7 Days</button>
+                    <button class="button" data-range="custom">Custom Range</button>
+                </div>
+            </div>
+
+            <form id="time-range-form">
+                <div class="field is-grouped is-grouped-centered">
+                    <div class="field">
+                        <label for="measurement-begin" class="label">Begin</label>
+                        <div class="control">
+                            <input class="input" type="datetime-local" id="measurement-begin" name="begin" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="measurement-end" class="label">End</label>
+                        <div class="control">
+                            <input class="input" type="datetime-local" id="measurement-end" name="end" />
+                        </div>
+                    </div>
+                    <div class="field" id="apply-button-field" style="display: none;">
+                        <label class="label">&nbsp;</label>
+                        <div class="control">
+                            <button type="button" id="apply-range" class="button is-info">Apply</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
-</form>
 
-<div id="iot-chart"></div>
+    <!-- Chart card -->
+    <div class="card">
+        <header class="card-header">
+            <p class="card-header-title">Temperature Data</p>
+            <button id="refresh-btn" class="card-header-icon" aria-label="refresh">
+                <span class="icon">
+                    <i class="fas fa-sync-alt"></i>
+                </span>
+            </button>
+        </header>
+        <div class="card-content">
+            <div id="chart-loading" class="has-text-centered is-hidden">
+                <span class="icon is-large">
+                    <i class="fas fa-spinner fa-pulse"></i>
+                </span>
+                <p>Loading data...</p>
+            </div>
+            <div id="iot-chart"></div>
+        </div>
+    </div>
+</div>
 
 <script>
     const deviceID = "{{ .Device.ID }}";
     const beginInput = document.getElementById("measurement-begin");
     const endInput = document.getElementById("measurement-end");
+    const applyButton = document.getElementById("apply-range");
+    const applyButtonField = document.getElementById("apply-button-field");
+    const loadingIndicator = document.getElementById("chart-loading");
+    const refreshButton = document.getElementById("refresh-btn");
+    let currentChart = null;
 
     function toLocalInputString(date) {
         const z = n => String(n).padStart(2, "0");
@@ -59,65 +114,167 @@
             + ":" + z(date.getMinutes());
     }
 
+    // Set time range based on selected button
+    function setTimeRange(range) {
+        const now = new Date();
+        let start = new Date(now);
+
+        switch (range) {
+            case "1h":
+                start = new Date(now.getTime() - 60 * 60 * 1000);
+                break;
+            case "6h":
+                start = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+                break;
+            case "24h":
+                start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+                break;
+            case "7d":
+                start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                break;
+            case "custom":
+                // Don't change the inputs for custom, just show the apply button
+                applyButtonField.style.display = "block";
+                return;
+        }
+
+        // Update input fields
+        beginInput.value = toLocalInputString(start);
+        endInput.value = toLocalInputString(now);
+
+        // Hide apply button for preset ranges
+        applyButtonField.style.display = "none";
+
+        // Load data immediately for preset ranges
+        loadChart(deviceID, beginInput.value, endInput.value);
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
+        // Set default to last hour
         const now = new Date();
         const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
         beginInput.value = toLocalInputString(oneHourAgo);
         endInput.value = toLocalInputString(now);
 
-        // initial draw
+        // Initial draw
         loadChart(deviceID, beginInput.value, endInput.value);
-    });
 
-    [beginInput, endInput].forEach(input => {
-        input.addEventListener("change", () => {
+        // Set up quick select buttons
+        document.querySelectorAll('.buttons.has-addons button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // Update button states
+                document.querySelectorAll('.buttons.has-addons button').forEach(b => {
+                    b.classList.remove('is-primary', 'is-selected');
+                });
+                btn.classList.add('is-primary', 'is-selected');
+
+                // Set time range
+                setTimeRange(btn.dataset.range);
+            });
+        });
+
+        // Apply button for custom range
+        applyButton.addEventListener('click', () => {
             if (beginInput.value && endInput.value) {
                 loadChart(deviceID, beginInput.value, endInput.value);
+            }
+        });
+
+        // Refresh button
+        refreshButton.addEventListener('click', () => {
+            const activeRange = document.querySelector('.buttons.has-addons button.is-selected').dataset.range;
+            if (activeRange === 'custom') {
+                loadChart(deviceID, beginInput.value, endInput.value);
+            } else {
+                // Refresh the current preset
+                setTimeRange(activeRange);
             }
         });
     });
 
     async function loadChart(deviceID, beginLocal, endLocal) {
-        const beginRFC = new Date(beginLocal).toISOString().replace(/\.\d{3}Z$/, "Z");
-        const endRFC = new Date(endLocal).toISOString().replace(/\.\d{3}Z$/, "Z");
+        // Show loading indicator
+        loadingIndicator.classList.remove("is-hidden");
 
-        const params = new URLSearchParams({ begin: beginRFC, end: endRFC });
+        try {
+            const beginRFC = new Date(beginLocal).toISOString().replace(/\.\d{3}Z$/, "Z");
+            const endRFC = new Date(endLocal).toISOString().replace(/\.\d{3}Z$/, "Z");
 
-        console.log("Requesting:", `/api/devices/${deviceID}/measurements?${params}`);
-        const resp = await fetch(`/api/devices/${deviceID}/measurements?${params}`);
-        if (!resp.ok) throw new Error(resp.statusText);
+            const params = new URLSearchParams({ begin: beginRFC, end: endRFC });
 
-        const measurements = await resp.json();
+            console.log("Requesting:", `/api/devices/${deviceID}/measurements?${params}`);
+            const resp = await fetch(`/api/devices/${deviceID}/measurements?${params}`);
+            if (!resp.ok) throw new Error(resp.statusText);
 
-        console.log("Measurements data  points:", measurements.length);
-        const times = measurements.map(m => new Date(m.timestamp).getTime() / 1000);
-        const vals = measurements.map(m => m.value);
+            const measurements = await resp.json();
 
-        opts = {
-            title: `Device ${deviceID}`,
-            width: 800, height: 600,
-            scales: { x: { time: true }, y: { auto: true } },
-            series: [
-                { label: "Time" },
-                {
-                    show: true,
-                    spanGaps: false,
-                    label: "Temperature",
-                    value: (u, v) => {
-                        return v
-                    },
-                    stroke: "red",
-                    width: 1,
-                    dash: [10, 5],
-                }
-            ],
+            console.log("Measurements data points:", measurements.length);
+
+            if (measurements.length === 0) {
+                document.getElementById("iot-chart").innerHTML =
+                    '<div class="notification is-warning">No data available for the selected time period.</div>';
+                loadingIndicator.classList.add("is-hidden");
+                return;
+            }
+
+            const times = measurements.map(m => new Date(m.timestamp).getTime() / 1000);
+            const vals = measurements.map(m => m.value);
+
+            const opts = {
+                title: `Device ${deviceID}`,
+                width: document.getElementById("iot-chart").offsetWidth,
+                height: 500,
+                scales: { x: { time: true }, y: { auto: true } },
+                cursor: {
+                    focus: {
+                        prox: 16
+                    }
+                },
+                legend: {
+                    show: true
+                },
+                tooltip: {
+                    show: true
+                },
+                series: [
+                    { label: "Time" },
+                    {
+                        show: true,
+                        spanGaps: false,
+                        label: "Temperature",
+                        value: (u, v) => v !== null ? v.toFixed(1) + "°C" : "--",
+                        stroke: "red",
+                        width: 1.5,
+                    }
+                ],
+            };
+
+            const chartEl = document.getElementById("iot-chart");
+            chartEl.innerHTML = "";
+
+            // Destroy existing chart if there is one
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            // Create new chart
+            currentChart = new uPlot(opts, [times, vals], chartEl);
+
+            // Add resize listener to handle responsive behavior
+            window.addEventListener("resize", () => {
+                currentChart.setSize({
+                    width: chartEl.offsetWidth,
+                    height: 500
+                });
+            });
+        } catch (error) {
+            console.error("Error loading chart:", error);
+            document.getElementById("iot-chart").innerHTML =
+                `<div class="notification is-danger">Error loading data: ${error.message}</div>`;
+        } finally {
+            // Hide loading indicator
+            loadingIndicator.classList.add("is-hidden");
         }
-
-        const chartEl = document.getElementById("iot-chart");
-        chartEl.innerHTML = "";
-        new uPlot(opts, [times, vals], chartEl);
     }
-
-    document.addEventListener("DOMContentLoaded", loadChart);
 </script>
 {{ end }}

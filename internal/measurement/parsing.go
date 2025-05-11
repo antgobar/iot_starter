@@ -10,7 +10,7 @@ import (
 
 type measurementsQuery struct {
 	deviceId int
-	start    time.Time
+	begin    time.Time
 	end      time.Time
 }
 
@@ -22,12 +22,12 @@ func getMeasurementsQueryParams(r *http.Request) (*measurementsQuery, error) {
 	}
 	r.URL.RawQuery = decodedQuery
 
-	startStr := r.URL.Query().Get("start")
-	var start time.Time
-	if startStr != "" {
-		start, err = time.Parse(time.RFC3339, startStr)
+	beginStr := r.URL.Query().Get("begin")
+	var begin time.Time
+	if beginStr != "" {
+		begin, err = time.Parse(time.RFC3339, beginStr)
 		if err != nil {
-			return nil, errors.New("invalid start date format. Use RFC3339 (YYYY-MM-DDTHH:MM:SSZ)")
+			return nil, errors.New("invalid begin date format. Use RFC3339 (YYYY-MM-DDTHH:MM:SSZ)")
 		}
 	}
 
@@ -45,5 +45,5 @@ func getMeasurementsQueryParams(r *http.Request) (*measurementsQuery, error) {
 		return nil, errors.New("invalid device ID")
 	}
 
-	return &measurementsQuery{deviceId, start, end}, nil
+	return &measurementsQuery{deviceId, begin, end}, nil
 }
