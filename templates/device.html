@@ -173,14 +173,12 @@
             });
         });
 
-        // Apply button for custom range
         applyButton.addEventListener('click', () => {
             if (beginInput.value && endInput.value) {
                 loadChart(deviceID, beginInput.value, endInput.value);
             }
         });
 
-        // Refresh button
         refreshButton.addEventListener('click', () => {
             const activeRange = document.querySelector('.buttons.has-addons button.is-selected').dataset.range;
             if (activeRange === 'custom') {
