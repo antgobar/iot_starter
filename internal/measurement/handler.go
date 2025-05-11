@@ -41,8 +41,8 @@ func (h *Handler) getMeasurements(w http.ResponseWriter, r *http.Request) {
 	}
 
 	deviceId := model.DeviceId(params.deviceId)
-
 	measurements, err := h.svc.GetMeasurements(ctx, user.ID, deviceId, params.start, params.end)
+
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "Error retrieving measurements", http.StatusInternalServerError)

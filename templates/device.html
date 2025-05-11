@@ -43,74 +43,81 @@
     </div>
 </form>
 
-<div id="chart-container">
-    <canvas id="timeSeriesChart"></canvas>
-</div>
+<div id="iot-chart"></div>
+
 <script>
-    if (typeof currentChart === 'undefined') {
-        var currentChart = null;
+    const deviceID = "{{ .Device.ID }}";
+    const beginInput = document.getElementById("measurement-begin");
+    const endInput = document.getElementById("measurement-end");
+
+    function toLocalInputString(date) {
+        const z = n => String(n).padStart(2, "0");
+        return date.getFullYear()
+            + "-" + z(date.getMonth() + 1)
+            + "-" + z(date.getDate())
+            + "T" + z(date.getHours())
+            + ":" + z(date.getMinutes());
     }
-    (function (container) {
-        const endpoint = `/api/devices/{{ .Device.ID }}/measurements`;
 
-        async function fetchMeasurements() {
-            const res = await fetch(endpoint);
-            if (!res.ok) throw new Error(res.status);
-            return res.json();
-        }
-        function processData(data) {
-            data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-            return {
-                labels: data.map(m => m.timestamp),
-                values: data.map(m => m.value),
-                unit: data[0]?.unit || ''
-            };
-        }
-        async function initChart() {
-            if (currentChart) {
-                currentChart.destroy();
-            }
-            try {
-                const raw = await fetchMeasurements();
-                const { labels, values, unit } = processData(raw);
-                const canvas = container.querySelector('#timeSeriesChart');
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-                var newChart = new Chart(ctx, {
-                    type: 'line', data: { labels, datasets: [{ label: `Value (${unit})`, data: values, fill: false, borderWidth: 2, pointRadius: 3 }] },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            x: { type: 'time', time: { unit: 'minute', stepSize: 5, displayFormats: { minute: "yyyy-MM-dd'T'HH:mm:ss" } }, ticks: { autoSkip: false }, title: { display: true, text: 'Timestamp (ISO)' } },
-                            y: { title: { display: true, text: `Value (${unit})` } }
-                        },
-                        plugins: {
-                            zoom: {
-                                pan: {
-                                    enabled: true,
-                                    modifierKey: 'ctrl',
-                                },
-                                zoom: {
-                                    drag: {
-                                        enabled: true
-                                    },
-                                    mode: 'xy',
-                                },
-                            }
-                        }
-                    }
-                });
-                currentChart = newChart;
-            } catch (err) {
-                console.error('Chart init failed', err);
-            }
-        }
+    document.addEventListener("DOMContentLoaded", () => {
+        const now = new Date();
+        const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+        beginInput.value = toLocalInputString(oneHourAgo);
+        endInput.value = toLocalInputString(now);
 
-        document.addEventListener('DOMContentLoaded', initChart);
-        document.body.addEventListener('htmx:afterSwap', evt => {
-            if (evt.detail.target.querySelector('#timeSeriesChart')) initChart();
+        // initial draw
+        loadChart(deviceID, beginInput.value, endInput.value);
+    });
+
+    [beginInput, endInput].forEach(input => {
+        input.addEventListener("change", () => {
+            if (beginInput.value && endInput.value) {
+                loadChart(deviceID, beginInput.value, endInput.value);
+            }
         });
+    });
 
-    })(document.getElementById('main-content'));
+    async function loadChart(deviceID, beginLocal, endLocal) {
+        const beginRFC = new Date(beginLocal).toISOString().replace(/\.\d{3}Z$/, "Z");
+        const endRFC = new Date(endLocal).toISOString().replace(/\.\d{3}Z$/, "Z");
+
+        const params = new URLSearchParams({ begin: beginRFC, end: endRFC });
+
+        console.log("Requesting:", `/api/devices/${deviceID}/measurements?${params}`);
+        const resp = await fetch(`/api/devices/${deviceID}/measurements?${params}`);
+        if (!resp.ok) throw new Error(resp.statusText);
+
+        const measurements = await resp.json();
+
+        console.log("Measurements data  points:", measurements.length);
+        const times = measurements.map(m => new Date(m.timestamp).getTime() / 1000);
+        const vals = measurements.map(m => m.value);
+
+        opts = {
+            title: `Device ${deviceID}`,
+            width: 800, height: 600,
+            scales: { x: { time: true }, y: { auto: true } },
+            series: [
+                { label: "Time" },
+                {
+                    show: true,
+                    spanGaps: false,
+                    label: "Temperature",
+                    value: (u, v) => {
+                        return v
+                    },
+                    stroke: "red",
+                    width: 1,
+                    dash: [10, 5],
+                }
+            ],
+        }
+
+        const chartEl = document.getElementById("iot-chart");
+        chartEl.innerHTML = "";
+        new uPlot(opts, [times, vals], chartEl);
+    }
+
+    document.addEventListener("DOMContentLoaded", loadChart);
 </script>
 {{ end }}

@@ -1,75 +1,72 @@
 {{ define "content" }}
-<div id="main-content">
-    <div>
-        <form action="/devices" method="POST">
-            <div class="field">
-                <label for="location" class="label">Location</label>
-                <div class="control">
-                    <input id="location" name="location" class="input" type="text" placeholder="Device location"
-                        required>
-                </div>
+<div>
+    <form action="/devices" method="POST">
+        <div class="field">
+            <label for="location" class="label">Location</label>
+            <div class="control">
+                <input id="location" name="location" class="input" type="text" placeholder="Device location" required>
             </div>
-            <div class="field">
-                <div class="control">
-                    <button type="submit" class="button is-primary">Onboard device</button>
-                </div>
+        </div>
+        <div class="field">
+            <div class="control">
+                <button type="submit" class="button is-primary">Onboard device</button>
             </div>
-        </form>
-    </div>
+        </div>
+    </form>
+</div>
 
-    {{ if not .Devices }}
-    <div class="has-text-centered">
-        <h3 class="title is-3">You have no devices registered</h3>
-    </div>
-    {{ else }}
-    <table class="table is-fullwidth">
-        <caption>
-            <h3 class="title is-3">Onboarded Devices</h3>
-        </caption>
-        <thead>
-            <tr>
-                <th>Location</th>
-                <th>Date onboarded</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="devices-rows">
-            {{ range .Devices }}
-            <tr id="device-row-{{ .ID }}">
-                <td>{{ .Location }}</td>
-                <td>{{ .CreatedAt.Format "2006-01-02 15:04:05" }}</td>
-                <td>
-                    <div class="field is-grouped">
-                        <a hx-get="/devices/{{.ID}}" hx-target="#main-content" hx-push-url="true"
-                            class="button is-link">View</a>
-                        <button class="button is-primary" data-device-id="{{ .ID }}" data-location="{{ .Location }}"
-                            onclick="reauthDevice(this)">Regenerate API Key</button>
-                        <button class="button is-danger" data-device-id="{{ .ID }}"
-                            onclick="offboardDevice(this)">Offboard</button>
-                    </div>
-                </td>
-            </tr>
-            {{ end }}
-        </tbody>
-    </table>
-    {{ end }}
-
-    <div id="reauthModal" class="modal">
-        <div class="modal-background"></div>
-        <div class="modal-content">
-            <div class="box">
-                <p id="modalLocation" class="subtitle"></p>
-                <label for="apiKeyInput" class="label">Your New API Key:</label>
-                <div class="field has-addons">
-                    <div class="control is-expanded">
-                        <input id="apiKeyInput" class="input" type="text" readonly>
-                    </div>
-                    <div class="control">
-                        <button id="copyBtn" class="button">Copy</button>
-                    </div>
+{{ if not .Devices }}
+<div class="has-text-centered">
+    <h3 class="title is-3">You have no devices registered</h3>
+</div>
+{{ else }}
+<table class="table is-fullwidth">
+    <caption>
+        <h3 class="title is-3">Onboarded Devices</h3>
+    </caption>
+    <thead>
+        <tr>
+            <th>Location</th>
+            <th>Date onboarded</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody id="devices-rows">
+        {{ range .Devices }}
+        <tr id="device-row-{{ .ID }}">
+            <td>{{ .Location }}</td>
+            <td>{{ .CreatedAt.Format "2006-01-02 15:04:05" }}</td>
+            <td>
+                <div class="field is-grouped">
+                    <a hx-get="/devices/{{.ID}}" hx-target="#main-content" hx-push-url="true"
+                        class="button is-link">View</a>
+                    <button class="button is-primary" data-device-id="{{ .ID }}" data-location="{{ .Location }}"
+                        onclick="reauthDevice(this)">Regenerate API Key</button>
+                    <button class="button is-danger" data-device-id="{{ .ID }}"
+                        onclick="offboardDevice(this)">Offboard</button>
                 </div>
-                <button id="closeBtn" class="button is-text">Close</button>
+            </td>
+        </tr>
+        {{ end }}
+    </tbody>
+</table>
+{{ end }}
+
+<div id="reauthModal" class="modal">
+    <div class="modal-background"></div>
+    <div class="modal-content">
+        <div class="box">
+            <p id="modalLocation" class="subtitle"></p>
+            <label for="apiKeyInput" class="label">Your New API Key:</label>
+            <div class="field has-addons">
+                <div class="control is-expanded">
+                    <input id="apiKeyInput" class="input" type="text" readonly>
+                </div>
+                <div class="control">
+                    <button id="copyBtn" class="button">Copy</button>
+                </div>
             </div>
+            <button id="closeBtn" class="button is-text">Close</button>
         </div>
     </div>
 </div>
