@@ -10,15 +10,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type PostgresRepo struct {
+type postgresRepo struct {
 	db *pgxpool.Pool
 }
 
-func NewPostgresRepository(ctx context.Context, db *pgxpool.Pool) *PostgresRepo {
-	return &PostgresRepo{db: db}
+func NewPostgresRepository(ctx context.Context, db *pgxpool.Pool) *postgresRepo {
+	return &postgresRepo{db: db}
 }
 
-func (s *PostgresRepo) Create(ctx context.Context, device *model.Device) (*model.Device, error) {
+func (s *postgresRepo) Create(ctx context.Context, device *model.Device) (*model.Device, error) {
 	sql := `
         INSERT INTO devices (user_id, location, api_key)
         VALUES ($1, $2, $3)
@@ -32,7 +32,7 @@ func (s *PostgresRepo) Create(ctx context.Context, device *model.Device) (*model
 	return device, nil
 }
 
-func (s *PostgresRepo) Reauth(ctx context.Context, device *model.Device) (*model.Device, error) {
+func (s *postgresRepo) Reauth(ctx context.Context, device *model.Device) (*model.Device, error) {
 	sql := `
 		UPDATE devices
 		SET api_key = $1
@@ -49,7 +49,7 @@ func (s *PostgresRepo) Reauth(ctx context.Context, device *model.Device) (*model
 
 }
 
-func (s *PostgresRepo) List(ctx context.Context, userId model.UserId) ([]*model.Device, error) {
+func (s *postgresRepo) List(ctx context.Context, userId model.UserId) ([]*model.Device, error) {
 	sql := `
 		SELECT id, user_id, location, created_at, api_key 
 		FROM devices
@@ -77,7 +77,7 @@ func (s *PostgresRepo) List(ctx context.Context, userId model.UserId) ([]*model.
 	return devices, nil
 }
 
-func (s *PostgresRepo) GetByUserById(ctx context.Context, userId model.UserId, deviceId model.DeviceId) (*model.Device, error) {
+func (s *postgresRepo) GetByUserById(ctx context.Context, userId model.UserId, deviceId model.DeviceId) (*model.Device, error) {
 	sql := `
 		SELECT id, location, created_at, api_key
 		FROM devices 
@@ -95,7 +95,7 @@ func (s *PostgresRepo) GetByUserById(ctx context.Context, userId model.UserId, d
 	return &device, nil
 }
 
-func (s *PostgresRepo) GetById(ctx context.Context, deviceId model.DeviceId) (*model.Device, error) {
+func (s *postgresRepo) GetById(ctx context.Context, deviceId model.DeviceId) (*model.Device, error) {
 	sql := `
 		SELECT id, location, created_at, api_key
 		FROM devices 
@@ -113,7 +113,7 @@ func (s *PostgresRepo) GetById(ctx context.Context, deviceId model.DeviceId) (*m
 	return &device, nil
 }
 
-func (s *PostgresRepo) DeleteByUserIdById(ctx context.Context, userId model.UserId, deviceId model.DeviceId) error {
+func (s *postgresRepo) DeleteByUserIdById(ctx context.Context, userId model.UserId, deviceId model.DeviceId) error {
 	sql := `
 		DELETE FROM devices
 		WHERE user_id = $1

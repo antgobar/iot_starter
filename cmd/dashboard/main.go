@@ -5,11 +5,11 @@ import (
 	"iotstarter/internal/api"
 	"iotstarter/internal/auth"
 	"iotstarter/internal/config"
-	"iotstarter/internal/database"
 	"iotstarter/internal/device"
 	"iotstarter/internal/measurement"
 	"iotstarter/internal/middleware"
 	"iotstarter/internal/pages"
+	"iotstarter/internal/postgres"
 	"iotstarter/internal/presentation"
 	"iotstarter/internal/session"
 	"iotstarter/internal/user"
@@ -27,7 +27,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*5))
 	defer cancel()
 
-	db := database.NewPostgresPool(ctx, dbUrl)
+	db := postgres.NewPostgresPool(ctx, dbUrl)
 
 	userRepo := user.NewPostgresRepository(ctx, db.Pool)
 	sessionRepo := session.NewPostgresRepository(ctx, db.Pool)

@@ -53,5 +53,6 @@ func (h *Handler) logOut(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("ERROR:", err.Error())
 	}
+	session.ClearCookie(w)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

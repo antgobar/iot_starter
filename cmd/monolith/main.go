@@ -7,12 +7,12 @@ import (
 	"iotstarter/internal/broker"
 	"iotstarter/internal/config"
 	"iotstarter/internal/consumer"
-	"iotstarter/internal/database"
 	"iotstarter/internal/device"
 	"iotstarter/internal/gateway"
 	"iotstarter/internal/measurement"
 	"iotstarter/internal/middleware"
 	"iotstarter/internal/pages"
+	"iotstarter/internal/postgres"
 	"iotstarter/internal/presentation"
 	"iotstarter/internal/session"
 	"iotstarter/internal/user"
@@ -28,7 +28,7 @@ func main() {
 
 	brokerClient := broker.NewMemoryBroker()
 
-	db := database.NewPostgresPool(ctx, dbUrl)
+	db := postgres.NewPostgresPool(ctx, dbUrl)
 
 	userRepo := user.NewPostgresRepository(ctx, db.Pool)
 	sessionRepo := session.NewPostgresRepository(ctx, db.Pool)

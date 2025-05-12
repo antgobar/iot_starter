@@ -5,10 +5,10 @@ import (
 	"iotstarter/internal/api"
 	"iotstarter/internal/broker"
 	"iotstarter/internal/config"
-	"iotstarter/internal/database"
 	"iotstarter/internal/device"
 	"iotstarter/internal/gateway"
 	"iotstarter/internal/middleware"
+	"iotstarter/internal/postgres"
 	"time"
 )
 
@@ -19,7 +19,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*5))
 	defer cancel()
 
-	db := database.NewPostgresPool(ctx, dbUrl)
+	db := postgres.NewPostgresPool(ctx, dbUrl)
 
 	brokerClient := broker.NewNatsBrokerClient(brokerUrl)
 	defer brokerClient.Close()

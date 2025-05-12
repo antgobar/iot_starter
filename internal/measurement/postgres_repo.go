@@ -9,15 +9,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type PostgresRepo struct {
+type postgresRepo struct {
 	db *pgxpool.Pool
 }
 
-func NewPostgresRepository(ctx context.Context, db *pgxpool.Pool) *PostgresRepo {
-	return &PostgresRepo{db: db}
+func NewPostgresRepository(ctx context.Context, db *pgxpool.Pool) *postgresRepo {
+	return &postgresRepo{db: db}
 }
 
-func (s *PostgresRepo) Create(ctx context.Context, m *model.Measurement) error {
+func (s *postgresRepo) Create(ctx context.Context, m *model.Measurement) error {
 	sql := `
 	INSERT INTO measurements (device_id, name, value, unit, timestamp)
 	VALUES ($1, $2, $3, $4, $5)
@@ -34,7 +34,7 @@ func (s *PostgresRepo) Create(ctx context.Context, m *model.Measurement) error {
 	return nil
 }
 
-func (s *PostgresRepo) GetDeviceMeasurements(ctx context.Context, userId model.UserId, deviceId model.DeviceId, start, end time.Time) ([]*model.Measurement, error) {
+func (s *postgresRepo) GetDeviceMeasurements(ctx context.Context, userId model.UserId, deviceId model.DeviceId, start, end time.Time) ([]*model.Measurement, error) {
 	sql := `
 		SELECT measurements.id, measurements.device_id, measurements.name, measurements.value, measurements.unit, measurements.timestamp 
 		FROM measurements

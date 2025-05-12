@@ -10,15 +10,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type PostgresRepo struct {
+type postgresRepo struct {
 	db *pgxpool.Pool
 }
 
-func NewPostgresRepository(ctx context.Context, db *pgxpool.Pool) *PostgresRepo {
-	return &PostgresRepo{db: db}
+func NewPostgresRepository(ctx context.Context, db *pgxpool.Pool) *postgresRepo {
+	return &postgresRepo{db: db}
 }
 
-func (s *PostgresRepo) Create(ctx context.Context, userId model.UserId) (*model.Session, error) {
+func (s *postgresRepo) Create(ctx context.Context, userId model.UserId) (*model.Session, error) {
 	err := s.Clear(ctx, userId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to clear sessions for user %d: %w", userId, err)
@@ -45,22 +45,7 @@ func (s *PostgresRepo) Create(ctx context.Context, userId model.UserId) (*model.
 	return &sesh, nil
 }
 
-func (s *PostgresRepo) Get(ctx context.Context, token model.SessionToken) (*model.Session, error) {
-	sql := `
-		SELECT * 
-		FROM sessions
-		WHERE token = $1
-	`
-
-	session := model.Session{}
-	row := s.db.QueryRow(ctx, sql, token)
-	if err := row.Scan(&session.ID, &session.UserId, &session.Token, &session.CreatedAt, &session.ExpiresAt); err != nil {
-		return nil, fmt.Errorf("failed to retrieve session %v: %w", session, err)
-	}
-	return &session, nil
-}
-
-func (s *PostgresRepo) GetUserFromToken(ctx context.Context, token model.SessionToken) (*model.User, error) {
+func (s *postgresRepo) GetUserFromToken(ctx context.Context, token model.SessionToken) (*model.User, error) {
 	sql := `
 		SELECT users.id, users.username, users.created_at, users.active
 		FROM users
@@ -77,7 +62,7 @@ func (s *PostgresRepo) GetUserFromToken(ctx context.Context, token model.Session
 	return &user, nil
 }
 
-func (s *PostgresRepo) Clear(ctx context.Context, userId model.UserId) error {
+func (s *postgresRepo) Clear(ctx context.Context, userId model.UserId) error {
 	sql := `
 		DELETE FROM sessions
 		WHERE user_id = $1

@@ -14,15 +14,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type PostgresRepo struct {
+type postgresRepo struct {
 	db *pgxpool.Pool
 }
 
-func NewPostgresRepository(ctx context.Context, db *pgxpool.Pool) *PostgresRepo {
-	return &PostgresRepo{db: db}
+func NewPostgresRepository(ctx context.Context, db *pgxpool.Pool) *postgresRepo {
+	return &postgresRepo{db: db}
 }
 
-func (s *PostgresRepo) Create(ctx context.Context, userName string, password string) (*model.User, error) {
+func (s *postgresRepo) Create(ctx context.Context, userName string, password string) (*model.User, error) {
 	sql := `
 		INSERT INTO users (username, hashed_password)
 		VALUES ($1, $2)
@@ -53,7 +53,7 @@ func (s *PostgresRepo) Create(ctx context.Context, userName string, password str
 	return &user, nil
 }
 
-func (s *PostgresRepo) GetFromCreds(ctx context.Context, userName string, password string) (*model.User, error) {
+func (s *postgresRepo) GetFromCreds(ctx context.Context, userName string, password string) (*model.User, error) {
 	sql := `
 		SELECT id, username, hashed_password, created_at, active
 		FROM users 
