@@ -24,7 +24,6 @@ func (m *memoryRepository) Create(ctx context.Context, userId model.UserId) (*mo
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	
 	seshToken := model.SessionToken(security.GenerateUUID())
 	sesh := model.Session{
 		UserId:    userId,
