@@ -61,10 +61,9 @@ func (s *postgresRepo) GetFromCreds(ctx context.Context, userName string, passwo
 	`
 
 	user := model.User{
-		Username: userName,
 	}
 
-	row := s.db.QueryRow(ctx, sql, user.Username)
+	row := s.db.QueryRow(ctx, sql, userName)
 	if err := row.Scan(&user.ID, &user.Username, &user.HashedPassword, &user.CreatedAt, &user.Active); err != nil {
 		if isNoRowsFoundError(err) {
 			return nil, ErrUserNotExists
@@ -77,6 +76,27 @@ func (s *postgresRepo) GetFromCreds(ctx context.Context, userName string, passwo
 	}
 
 	return &user, nil
+}
+
+func (s *postgresRepo) GetById(ctx context.Context, userId model.UserId) (*model.User, error) {
+	sql := `
+		SELECT id, username, created_at, active
+		FROM users 
+		WHERE user_id = $1 AND active = TRUE
+	`
+	user := model.User{
+	}
+
+	row := s.db.QueryRow(ctx, sql, user.Username)
+	if err := row.Scan(&user.ID, &user.Username, &user.CreatedAt, &user.Active); err != nil {
+		if isNoRowsFoundError(err) {
+			return nil, ErrUserNotExists
+		}
+		return nil, fmt.Errorf("failed to find user %v: %w", user, err)
+	}
+
+	return &user, nil
+
 }
 
 var ErrUsernameTaken = errors.New("username taken")
