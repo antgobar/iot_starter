@@ -9,6 +9,7 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -23,11 +24,17 @@ func main() {
 	url := "http://localhost:" + port + "/api/measurements"
 	log.Println("Sending data to: ", url)
 
+	deviceIdStr := os.Getenv("TEST_DEVICE_ID")
+	deviceId, err := strconv.Atoi(deviceIdStr)
+	if err != nil {
+		log.Fatalln("Incorrect device id format", deviceIdStr)
+	}
+
 	for {
 		currentTime := time.Now().UTC()
 
 		measurement := model.Measurement{
-			DeviceId:  43,
+			DeviceId:  model.DeviceId(deviceId),
 			Name:      "temperature",
 			Value:     math.Sin(float64(currentTime.Unix()) / 10),
 			Unit:      "C",

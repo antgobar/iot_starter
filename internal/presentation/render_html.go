@@ -16,6 +16,7 @@ var pageTemplates []string = []string{
 	"register",
 	"devices",
 	"device",
+	"device-reauth",
 }
 
 var baseTemplates []string = []string{

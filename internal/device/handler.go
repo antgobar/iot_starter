@@ -2,7 +2,6 @@ package device
 
 import (
 	"context"
-	"encoding/json"
 	"iotstarter/internal/auth"
 	"iotstarter/internal/model"
 	"iotstarter/internal/presentation"
@@ -25,7 +24,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /devices", h.register)
 	mux.HandleFunc("GET /devices", h.list)
 	mux.HandleFunc("GET /devices/{id}", h.getById)
-	mux.HandleFunc("PATCH /api/devices/{id}/reauth", h.reauth)
+	mux.HandleFunc("PATCH /devices/{id}/reauth", h.reauth)
 	mux.HandleFunc("DELETE /devices/{id}", h.delete)
 }
 
@@ -164,9 +163,17 @@ func (h *Handler) reauth(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error reauthing device", http.StatusInternalServerError)
 		return
 	}
+	data := struct {
+		ApiKey model.ApiKey
+	}{
+		ApiKey: device.ApiKey,
+	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(device)
+	if err := h.p.Present(w, r, "device-reauth", data); err != nil {
+		log.Println("ERROR:", err.Error())
+		http.Error(w, "resource error", http.StatusInternalServerError)
+	}
+
 }
 
 func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
@@ -193,4 +200,6 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to offboard device with id: "+deviceIdStr, http.StatusUnauthorized)
 		return
 	}
+
+	w.WriteHeader(http.StatusAccepted)
 }
