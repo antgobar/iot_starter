@@ -53,13 +53,15 @@
                     <div class="field">
                         <label for="measurement-begin" class="label">Begin</label>
                         <div class="control">
-                            <input class="input" type="datetime-local" id="measurement-begin" name="begin" />
+                            <input class="input has-background-light has-text-dark" type="datetime-local"
+                                id="measurement-begin" name="begin" />
                         </div>
                     </div>
                     <div class="field">
                         <label for="measurement-end" class="label">End</label>
                         <div class="control">
-                            <input class="input" type="datetime-local" id="measurement-end" name="end" />
+                            <input class="input has-background-light has-text-dark" type="datetime-local"
+                                id="measurement-end" name="end" />
                         </div>
                     </div>
                     <div class="field" id="apply-button-field" style="display: none;">
@@ -90,7 +92,7 @@
                 </span>
                 <p>Loading data...</p>
             </div>
-            <div id="iot-chart"></div>
+            <div id="iot-chart" class="has-background-light	has-text-dark"></div>
         </div>
     </div>
 </div>
@@ -217,9 +219,11 @@
 
             const times = measurements.map(m => new Date(m.timestamp).getTime() / 1000);
             const vals = measurements.map(m => m.value);
+            const measurementName = measurements[0].name;
+            const measurementUnit = measurements[0].unit;
 
             const opts = {
-                title: `Device ${deviceID}`,
+                title: `Device ${deviceID} - ${measurementName}`,
                 width: document.getElementById("iot-chart").offsetWidth,
                 height: 500,
                 scales: { x: { time: true }, y: { auto: true } },
@@ -239,9 +243,9 @@
                     {
                         show: true,
                         spanGaps: false,
-                        label: "Temperature",
-                        value: (u, v) => v !== null ? v.toFixed(1) + "°C" : "--",
-                        stroke: "red",
+                        label: measurementName,
+                        value: (u, v) => v !== null ? v.toFixed(1) + " " + measurementUnit : "--",
+                        stroke: "blue",
                         width: 1.5,
                     }
                 ],
@@ -250,15 +254,12 @@
             const chartEl = document.getElementById("iot-chart");
             chartEl.innerHTML = "";
 
-            // Destroy existing chart if there is one
             if (currentChart) {
                 currentChart.destroy();
             }
 
-            // Create new chart
             currentChart = new uPlot(opts, [times, vals], chartEl);
 
-            // Add resize listener to handle responsive behavior
             window.addEventListener("resize", () => {
                 currentChart.setSize({
                     width: chartEl.offsetWidth,
