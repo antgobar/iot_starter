@@ -6,7 +6,21 @@ import (
 	"testing"
 )
 
-func TestMemoryRepoCreatesSession(t *testing.T) {
+func TestMemoryRepoCreate(t *testing.T) {
+	ctx := context.TODO()
+	userId := model.UserId(123)
+	memrep := NewMemoryRepository()
+
+	memrep.Create(ctx, userId)
+
+	session := memrep.sessions[0]
+
+	if session.UserId != userId {
+		t.Errorf("want %v, got %v", userId, session.UserId)
+	}
+}
+
+func TestMemoryRepoGetUserFromToken(t *testing.T) {
 	ctx := context.TODO()
 	userId := model.UserId(123)
 	memrep := NewMemoryRepository()
