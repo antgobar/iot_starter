@@ -8,9 +8,13 @@ import (
 	"net/http"
 )
 
-const baseTemplateDir = "templates"
+const (
+	baseTemplateDir   = "templates"
+	pageTemplateCount = 6
+	baseTemplateCount = 2
+)
 
-var pageTemplates []string = []string{
+var pageTemplates [6]string = [6]string{
 	"home",
 	"login",
 	"register",
@@ -19,7 +23,7 @@ var pageTemplates []string = []string{
 	"device-reauth",
 }
 
-var baseTemplates []string = []string{
+var baseTemplates [2]string = [2]string{
 	"base",
 	"navbar",
 }
@@ -53,7 +57,7 @@ func (t *Templates) Present(w http.ResponseWriter, r *http.Request, name string,
 	return tmpl.ExecuteTemplate(w, tmplName, payload)
 }
 
-func compileTemplates(bases []string, pages []string) (*CompliedTemplates, error) {
+func compileTemplates(bases [baseTemplateCount]string, pages [pageTemplateCount]string) (*CompliedTemplates, error) {
 	var templates = make(CompliedTemplates)
 	for _, p := range pages {
 		var allPages = make([]string, 0)

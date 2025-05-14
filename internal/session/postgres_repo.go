@@ -57,7 +57,7 @@ func (s *postgresRepo) GetUserFromToken(ctx context.Context, token model.Session
 
 	row := s.db.QueryRow(ctx, sql, token)
 	if err := row.Scan(&user.ID, &user.Username, &user.CreatedAt, &user.Active); err != nil {
-		return &user, fmt.Errorf("failed to retrieve user id from token %v: %w", user, err)
+		return &user, noUserSessionErr(err)
 	}
 	return &user, nil
 }
@@ -69,7 +69,7 @@ func (s *postgresRepo) Clear(ctx context.Context, userId model.UserId) error {
 	`
 	_, err := s.db.Exec(ctx, sql, userId)
 	if err != nil {
-		return fmt.Errorf("failed to delete existing sessions for user %d: %w", userId, err)
+		return failedToDeleteUserSessionErr(userId, err)
 	}
 	return nil
 }

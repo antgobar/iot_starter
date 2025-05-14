@@ -4,6 +4,7 @@ import (
 	"context"
 	"iotstarter/internal/model"
 	"iotstarter/internal/security"
+	"slices"
 	"sync"
 	"time"
 )
@@ -37,5 +38,27 @@ func (m *memoryRepository) Create(ctx context.Context, userId model.UserId) (*mo
 }
 
 func (m *memoryRepository) GetUserFromToken(ctx context.Context, token model.SessionToken) (*model.User, error) {
-	return nil, nil
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	for _, session := range m.sessions {
+		if session.Token == token {
+			return &model.User{ID: session.UserId}, nil
+		}
+	}
+
+	return nil, noUserSessionErr(nil)
+}
+
+func (m *memoryRepository) Clear(ctx context.Context, userId model.UserId) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	for i, session := range m.sessions {
+		if session.UserId == userId {
+			m.sessions = slices.Delete(m.sessions, i, i+1)
+			return nil
+		}
+	}
+	return failedToDeleteUserSessionErr(userId, nil)
 }
