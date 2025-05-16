@@ -45,19 +45,21 @@
                         onclick="document.getElementById('reauth-popover').showPopover()"
                         class="button is-primary">Regenerate API Key</button>
 
-                    <button hx-delete="/devices/{{.ID}}" hx-target="#device-row-{{ .ID }}" hx-confirm="Are you sure you want to offboard this device?"
+                    <button hx-delete="/devices/{{.ID}}" hx-target="#device-row-{{ .ID }}"
+                        hx-confirm="Are you sure you want to offboard this device?"
                         class="button is-danger">Offboard</button>
                 </div>
             </td>
         </tr>
-        
+
         {{ end }}
     </tbody>
 </table>
 {{ end }}
 
-<div id="reauth-popover" popover>
+<div id="reauth-popover" style="width: 50%;" popover>
     <div id="reauth-popover-content"></div>
+    <br>
     <button class="button is-info" onclick="document.getElementById('reauth-popover').hidePopover()">Close</button>
 </div>
 

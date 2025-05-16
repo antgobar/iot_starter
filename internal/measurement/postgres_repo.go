@@ -41,7 +41,8 @@ func (s *postgresRepo) GetDeviceMeasurements(ctx context.Context, userId model.U
 		INNER JOIN devices ON devices.id = measurements.device_id
 		WHERE measurements.device_id = $1
 		AND devices.user_id = $2
-		AND timestamp BETWEEN $3 AND $4
+		AND measurements.timestamp BETWEEN $3 AND $4
+		ORDER BY measurements.timestamp DESC
 	`
 	rows, err := s.db.Query(ctx, sql, deviceId, userId, start, end)
 	if err != nil {
