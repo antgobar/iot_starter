@@ -9,23 +9,27 @@ import (
 )
 
 const (
-	baseTemplateDir   = "templates"
-	pageTemplateCount = 6
-	baseTemplateCount = 2
+	baseTemplateDir = "templates"
+	basesCount      = 2
+	pagesCount      = 5
+	fragmentsCount  = 1
 )
 
-var pageTemplates [6]string = [6]string{
+var bases [basesCount]string = [basesCount]string{
+	"base",
+	"navbar",
+}
+
+var pages [pagesCount]string = [pagesCount]string{
 	"home",
 	"login",
 	"register",
 	"devices",
 	"device",
-	"device-reauth",
 }
 
-var baseTemplates [2]string = [2]string{
-	"base",
-	"navbar",
+var fragments [fragmentsCount]string = [fragmentsCount]string{
+	"device-reauth",
 }
 
 type CompliedTemplates map[string]*template.Template
@@ -35,7 +39,7 @@ type Templates struct {
 }
 
 func NewHtmlPresenter() *Templates {
-	templates, err := compileTemplates(baseTemplates, pageTemplates)
+	templates, err := compileTemplates(bases, pages, fragments)
 	if err != nil {
 		log.Fatalln("Failed to compile templates:", err.Error())
 	}
@@ -57,7 +61,12 @@ func (t *Templates) Present(w http.ResponseWriter, r *http.Request, name string,
 	return tmpl.ExecuteTemplate(w, tmplName, payload)
 }
 
-func compileTemplates(bases [baseTemplateCount]string, pages [pageTemplateCount]string) (*CompliedTemplates, error) {
+func compileTemplates(
+	bases [basesCount]string,
+	pages [pagesCount]string,
+	fragments [fragmentsCount]string,
+) (*CompliedTemplates, error) {
+
 	var templates = make(CompliedTemplates)
 	for _, p := range pages {
 		var allPages = make([]string, 0)
@@ -73,5 +82,14 @@ func compileTemplates(bases [baseTemplateCount]string, pages [pageTemplateCount]
 			return nil, err
 		}
 	}
+
+	var err error
+	for _, f := range fragments {
+		templates[f], err = template.ParseFiles(fmt.Sprintf("%s/%s.html", baseTemplateDir, f))
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &templates, nil
 }
